@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DocPocket & MedWin - Console Centrale de Licences</title>
-    <meta name="description" content="Tableau de bord administrateur unifié pour la supervision et la gestion des licences DocPocket & MedWin">
+    <title>DocPocket Suite - Console Centrale de Licences</title>
+    <meta name="description" content="Tableau de bord administrateur unifié pour la supervision et la gestion des licences DocPocket Suite">
     <meta name="theme-color" content="#070d1e">
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" type="image/png" href="./icon-192.png">
@@ -947,7 +947,7 @@
             <div class="lock-logo-badge">
                 <img src="./logo.png" alt="DocPocket" onerror="this.src='./icon-192.png'">
             </div>
-            <h1 class="lock-title">DocPocket & MedWin</h1>
+            <h1 class="lock-title">DocPocket Suite</h1>
             <div class="lock-subtitle">Supervision & Gestion des Licences</div>
 
             <div class="pin-dots-row">
@@ -987,7 +987,7 @@
                     </div>
                     <div class="brand-text">
                         <h1>Console de Licences</h1>
-                        <span>DocPocket • MedWin Suite</span>
+                        <span>DocPocket Suite • Administration</span>
                     </div>
                 </div>
 
@@ -2211,7 +2211,7 @@
             const inputEl = document.getElementById(nameInputId);
             const name = inputEl ? inputEl.value.trim() : 'Docteur';
 
-            const msg = `Bonjour ${name},\n\nVoici votre clé d'activation officielle pour *${appName}* :\n🔑 *${key}*\n\nPour l'activer, ouvrez l'application et collez cette clé dans l'écran d'enregistrement.\n\nCordialement,\nSupport DocPocket & MedWin`;
+            const msg = `Bonjour ${name},\n\nVoici votre clé d'activation officielle pour *${appName}* :\n🔑 *${key}*\n\nPour l'activer, ouvrez l'application et collez cette clé dans l'écran d'enregistrement.\n\nCordialement,\nSupport DocPocket Suite`;
             const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
             window.open(url, '_blank');
         }
@@ -2222,7 +2222,7 @@
             const name = inputEl ? inputEl.value.trim() : 'Docteur';
 
             const subject = `Votre clé de licence officielle - ${appName}`;
-            const body = `Bonjour ${name},\n\nVotre licence pour ${appName} a été validée avec succès.\n\nClé de licence : ${key}\n\nVeuillez la coller lors du premier démarrage du logiciel pour activer vos droits.\n\nCordialement,\nService Technique DocPocket & MedWin`;
+            const body = `Bonjour ${name},\n\nVotre licence pour ${appName} a été validée avec succès.\n\nClé de licence : ${key}\n\nVeuillez la coller lors du premier démarrage du logiciel pour activer vos droits.\n\nCordialement,\nService Technique DocPocket Suite`;
 
             window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         }

@@ -1,6 +1,6 @@
-# DocPocket & MedWin - Console Centrale de Licences (PWA)
+# DocPocket Suite - Console Centrale de Licences (PWA)
 
-Tableau de bord unifié et autonome sous forme de **Progressive Web App (PWA)** permettant de superviser, générer et synchroniser les licences pour l'ensemble des applications de la suite DocPocket et MedWin.
+Tableau de bord unifié et autonome sous forme de **Progressive Web App (PWA)** permettant de superviser, générer et synchroniser les licences pour l'ensemble des applications de la suite DocPocket.
 
 ---
 

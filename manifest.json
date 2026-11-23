@@ -1,7 +1,7 @@
 {
-  "name": "DocPocket & MedWin - Suite Générateur de Licences",
-  "short_name": "DocPocket Keygen",
-  "description": "Générateur universel et sécurisé de clés de licences pour l'ensemble des applications DocPocket et MedWin.",
+  "name": "DocPocket Suite - Gestionnaire de Licences",
+  "short_name": "DocPocket Suite",
+  "description": "Générateur universel et sécurisé de clés de licences pour l'ensemble des applications de la suite DocPocket.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#070d1e",
