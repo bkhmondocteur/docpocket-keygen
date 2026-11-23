@@ -1,0 +1,2739 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DocPocket & MedWin - Console Centrale de Licences</title>
+    <meta name="description" content="Tableau de bord administrateur unifié pour la supervision et la gestion des licences DocPocket & MedWin">
+    <meta name="theme-color" content="#070d1e">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" href="./icon-192.png">
+    <link rel="apple-touch-icon" href="./icon-192.png">
+
+    <style>
+        :root {
+            --bg-main: #070d1e;
+            --bg-card: #0f192d;
+            --bg-card-inner: #15223c;
+            --bg-input: #091224;
+            --border-color: rgba(255, 255, 255, 0.09);
+            --border-gold: rgba(234, 179, 8, 0.4);
+            --gold: #facc15;
+            --gold-dark: #ca8a04;
+            --primary: #0284c7;
+            --primary-light: #38bdf8;
+            --primary-dark: #0369a1;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 18px;
+            --shadow-card: 0 20px 45px rgba(0, 0, 0, 0.5), 0 0 25px rgba(2, 132, 199, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 0%, #102142 0%, #070d1e 65%, #040813 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ============================================================== */
+        /* 1. ÉCRAN DE VERROUILLAGE SÉCURISÉ (PIN MAÎTRE)                 */
+        /* ============================================================== */
+        #lockScreen {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 50% 30%, #132448 0%, #070d1e 80%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .lock-container {
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .lock-logo-badge {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 16px;
+            background: linear-gradient(135deg, #0284c7, #d97706);
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.3rem;
+            box-shadow: 0 10px 25px rgba(2, 132, 199, 0.35);
+            border: 2px solid rgba(250, 204, 21, 0.4);
+            overflow: hidden;
+        }
+
+        .lock-logo-badge img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .lock-title {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .lock-subtitle {
+            font-size: 0.85rem;
+            color: var(--gold);
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .pin-dots-row {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .pin-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(250, 204, 21, 0.4);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .pin-dot.filled {
+            background: var(--gold);
+            border-color: #fff;
+            box-shadow: 0 0 12px rgba(250, 204, 21, 0.8);
+            transform: scale(1.15);
+        }
+
+        .pin-keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .key-btn {
+            background: rgba(21, 34, 60, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 700;
+            height: 64px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+            user-select: none;
+        }
+
+        .key-btn:active {
+            transform: scale(0.92);
+            background: rgba(2, 132, 199, 0.4);
+            border-color: var(--primary-light);
+        }
+
+        .key-btn.action-btn {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: rgba(15, 25, 45, 0.5);
+        }
+
+        .key-btn.submit-btn {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #fff;
+            border-color: var(--primary-light);
+            font-size: 1.15rem;
+        }
+
+        .lock-error-msg {
+            color: var(--danger);
+            font-size: 0.86rem;
+            font-weight: 600;
+            min-height: 20px;
+            margin-top: 6px;
+        }
+
+        .shake {
+            animation: shakeAnim 0.35s ease-in-out;
+        }
+
+        @keyframes shakeAnim {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-12px); }
+            40% { transform: translateX(12px); }
+            60% { transform: translateX(-8px); }
+            80% { transform: translateX(8px); }
+        }
+
+        /* ============================================================== */
+        /* 2. APPLICATION PRINCIPALE & HEADER                             */
+        /* ============================================================== */
+        #mainApp {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .top-navbar {
+            background: rgba(11, 20, 38, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 12px 18px;
+        }
+
+        .nav-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #0284c7, #facc15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+            overflow: hidden;
+        }
+
+        .brand-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .brand-text h1 {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.2;
+        }
+
+        .brand-text span {
+            font-size: 0.75rem;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(2, 132, 199, 0.12);
+            border: 1px solid rgba(2, 132, 199, 0.3);
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--primary-light);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .status-pill:hover {
+            background: rgba(2, 132, 199, 0.25);
+        }
+
+        .status-pill.connected {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.4);
+            color: #4ade80;
+        }
+
+        .status-pill.error {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #f87171;
+        }
+
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(21, 34, 60, 0.7);
+            border: 1px solid var(--border-color);
+            color: #cbd5e1;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: rgba(2, 132, 199, 0.25);
+            color: #fff;
+            border-color: var(--primary-light);
+        }
+
+        .icon-btn.lock-btn {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+        }
+
+        .icon-btn.lock-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        /* ============================================================== */
+        /* 3. CONTENEUR PRINCIPAL & ONGLETS                               */
+        /* ============================================================== */
+        .content-area {
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px 16px 40px;
+            flex: 1;
+        }
+
+        .tabs-scroller {
+            overflow-x: auto;
+            margin-bottom: 22px;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tabs-scroller::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            background: rgba(11, 20, 38, 0.6);
+            padding: 6px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            min-width: max-content;
+        }
+
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(2, 132, 199, 0.35) 0%, rgba(3, 105, 161, 0.5) 100%);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+        }
+
+        .tab-btn.gold-active.active {
+            background: linear-gradient(135deg, rgba(234, 179, 8, 0.25) 0%, rgba(202, 138, 4, 0.35) 100%);
+            border-color: rgba(250, 204, 21, 0.5);
+            color: var(--gold);
+        }
+
+        .tab-badge {
+            background: rgba(2, 132, 199, 0.25);
+            color: var(--primary-light);
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+
+        /* ============================================================== */
+        /* 4. CARTES DES FORMULAIRES                                      */
+        /* ============================================================== */
+        .app-panel {
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .app-panel.active {
+            display: block;
+        }
+
+        .card-main {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-card);
+            position: relative;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .panel-title-group h2 {
+            font-size: 1.25rem;
+            color: #fff;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-title-group p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .app-tag {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(250, 204, 21, 0.15);
+            color: var(--gold);
+            border: 1px solid rgba(250, 204, 21, 0.3);
+        }
+
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid-2, .form-grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg-input);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.25);
+            background: #0d1a33;
+        }
+
+        .duration-selector, .devices-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .pill-choice {
+            padding: 8px 14px;
+            background: var(--bg-card-inner);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pill-choice:hover {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .pill-choice.selected {
+            background: rgba(2, 132, 199, 0.25);
+            border-color: var(--primary-light);
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .btn-generate {
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: var(--radius-md);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.35);
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-generate:hover {
+            filter: brightness(1.15);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(2, 132, 199, 0.5);
+        }
+
+        .btn-generate:active {
+            transform: translateY(0);
+        }
+
+        /* ============================================================== */
+        /* 5. BLOC RÉSULTAT DE LICENCE                                    */
+        /* ============================================================== */
+        .result-container {
+            display: none;
+            margin-top: 24px;
+            background: var(--bg-card-inner);
+            border: 1.5px dashed var(--gold);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .result-badge {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.35);
+            font-size: 0.74rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+
+        .key-box {
+            background: #060b17;
+            border: 1px solid rgba(250, 204, 21, 0.35);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .key-text {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: var(--gold);
+            letter-spacing: 2px;
+            word-break: break-all;
+            user-select: all;
+        }
+
+        .result-details-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .result-details-row span {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .act-btn {
+            padding: 11px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-copy {
+            background: var(--gold);
+            color: #070d1e;
+        }
+
+        .btn-copy:hover {
+            filter: brightness(1.15);
+        }
+
+        .btn-whatsapp {
+            background: #25D366;
+            color: #fff;
+        }
+
+        .btn-whatsapp:hover {
+            background: #20bd5a;
+        }
+
+        .btn-email {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-email:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* ============================================================== */
+        /* 6. REGISTRE & HISTORIQUE UNIFIÉ                                */
+        /* ============================================================== */
+        .registry-toolbar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-wrapper {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .filter-select {
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-size: 0.86rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .registry-table-wrapper {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+        }
+
+        .reg-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.86rem;
+        }
+
+        .reg-table th {
+            background: #0b1426;
+            padding: 12px 14px;
+            font-weight: 700;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .reg-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            vertical-align: middle;
+        }
+
+        .reg-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .doc-name-cell {
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .doc-sub-cell {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .key-mono {
+            font-family: monospace;
+            font-size: 0.84rem;
+            color: var(--gold);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+
+        .status-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .status-badge.active {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-badge.revoked {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-table-action {
+            padding: 6px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .btn-table-action:hover {
+            background: rgba(2, 132, 199, 0.3);
+            color: #fff;
+        }
+
+        .registry-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* ============================================================== */
+        /* 7. MODALE DES PARAMÈTRES & FIREBASE                            */
+        /* ============================================================== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 8, 19, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: var(--bg-card);
+            border: 1.5px solid var(--border-gold);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 520px;
+            padding: 26px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.2s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .modal-header h3 {
+            font-size: 1.15rem;
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        .btn-close-modal {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.3rem;
+            cursor: pointer;
+        }
+
+        .btn-close-modal:hover {
+            color: #fff;
+        }
+
+        .modal-section {
+            margin-bottom: 22px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .modal-section-title {
+            font-size: 0.9rem;
+            color: #fff;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .test-msg {
+            font-size: 0.82rem;
+            margin-top: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        /* ============================================================== */
+        /* 8. TOAST NOTIFICATION                                          */
+        /* ============================================================== */
+        #toastBox {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: rgba(15, 25, 45, 0.95);
+            border: 1px solid var(--primary-light);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 10000;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. ÉCRAN DE VERROUILLAGE ADMINISTRATEUR -->
+    <div id="lockScreen">
+        <div class="lock-container">
+            <div class="lock-logo-badge">
+                <img src="./logo.png" alt="DocPocket" onerror="this.src='./icon-192.png'">
+            </div>
+            <h1 class="lock-title">DocPocket & MedWin</h1>
+            <div class="lock-subtitle">Supervision & Gestion des Licences</div>
+
+            <div class="pin-dots-row">
+                <div class="pin-dot" id="dot0"></div>
+                <div class="pin-dot" id="dot1"></div>
+                <div class="pin-dot" id="dot2"></div>
+                <div class="pin-dot" id="dot3"></div>
+            </div>
+
+            <div class="pin-keypad">
+                <button class="key-btn" onclick="pressPin('1')">1</button>
+                <button class="key-btn" onclick="pressPin('2')">2</button>
+                <button class="key-btn" onclick="pressPin('3')">3</button>
+                <button class="key-btn" onclick="pressPin('4')">4</button>
+                <button class="key-btn" onclick="pressPin('5')">5</button>
+                <button class="key-btn" onclick="pressPin('6')">6</button>
+                <button class="key-btn" onclick="pressPin('7')">7</button>
+                <button class="key-btn" onclick="pressPin('8')">8</button>
+                <button class="key-btn" onclick="pressPin('9')">9</button>
+                <button class="key-btn action-btn" onclick="clearPin()">Effacer</button>
+                <button class="key-btn" onclick="pressPin('0')">0</button>
+                <button class="key-btn action-btn submit-btn" onclick="submitPin()">🔓 Entrer</button>
+            </div>
+
+            <div class="lock-error-msg" id="pinErrorMsg"></div>
+        </div>
+    </div>
+
+    <!-- 2. APPLICATION PRINCIPALE -->
+    <div id="mainApp">
+        <!-- TOP NAVBAR -->
+        <header class="top-navbar">
+            <div class="nav-inner">
+                <div class="brand-box">
+                    <div class="brand-icon">
+                        <img src="./icon-192.png" alt="Logo">
+                    </div>
+                    <div class="brand-text">
+                        <h1>Console de Licences</h1>
+                        <span>DocPocket • MedWin Suite</span>
+                    </div>
+                </div>
+
+                <div class="top-actions">
+                    <div class="status-pill" id="firebasePill" onclick="openSettingsModal()" title="Cliquer pour configurer Firebase">
+                        <span id="firebaseStatusDot">⚪</span>
+                        <span id="firebaseStatusText">Stockage Local</span>
+                    </div>
+                    <button class="icon-btn" onclick="openSettingsModal()" title="Paramètres & Firebase">⚙️</button>
+                    <button class="icon-btn lock-btn" onclick="lockApp()" title="Verrouiller la console">🔒</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- ZONE CENTRALE -->
+        <main class="content-area">
+            <!-- SCROLLER D'ONGLETS -->
+            <div class="tabs-scroller">
+                <div class="nav-tabs">
+                    <button class="tab-btn active" onclick="switchTab('cab')">
+                        🏥 DocPocket Cabinet
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('medoc')">
+                        💊 DocPocket Medoc
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('smsrdv')">
+                        📱 DocPocket SMS RDV
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('mailpocket')">
+                        📧 MailPocket Pro
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('compta')">
+                        💼 ComptaPocket SMS
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('pro')">
+                        ⚡ DocPocket Pro
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('finpocket')">
+                        📊 FinPocket
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('glycopocket')">
+                        🩸 GlycoPocket
+                    </button>
+                    <button class="tab-btn gold-active" onclick="switchTab('registry')">
+                        📜 Registre & Suivi <span class="tab-badge" id="regCountBadge">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ONGLET 1 : DOCPOCKET CABINET -->
+            <section class="app-panel active" id="panel-cab">
+                <div class="card-main">
+                    <div class="panel-header">
+                        <div class="panel-title-group">
+                            <h2>🏥 DocPocket Cabinet <span class="app-tag">Cabinet & Clinique</span></h2>
+                            <p>Génération de licence sécurisée avec signature cryptographique praticien</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Nom & Prénom du Médecin *</label>
+                            <input type="text" id="cab_name" class="form-control" placeholder="Ex: Dr. Ben Khalifa Mohamed" autofocus>
+                        </div>
+                        <div class="form-group">
+                            <label>Numéro d'Ordre National *</label>
+                            <input type="text" id="cab_ordre" class="form-control" placeholder="Ex: 12345">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label>Spécialité Médicale</label>
+                            <input type="text" id="cab_spec" class="form-control" placeholder="Ex: Médecine Générale" list="specList">
+                            <datalist id="specList">
+                                <option value="Médecine Générale">
+                                <option value="Cardiologie">
+                                <option value="Pédiatrie">
+                                <option value="Gynécologie Obstétrique">
+                                <option value="Ophtalmologie">
+                                <option value="Dermatologie">
+                                <option value="Orthopédie">
+                                <option value="Psychiatrie">
+                            </datalist>
+                        </div>
+                        <div class="form-group">
+                            <label>Gouvernorat / Ville</label>
+                            <input type="text" id="cab_ville" class="form-control" placeholder="Ex: Tunis">
+                        </div>
+                        <div class="form-group">
+                            <label>Téléphone Praticien</label>
+                            <input type="text" id="cab_tel" class="form-control" placeholder="Ex: +216 98 123 456">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Durée de Validité</label>
+                            <div class="duration-selector">
+                                <button type="button" class="pill-choice selected" data-val="365" onclick="selectDuration(this, 'cab')">1 An (365j)</button>
+                                <button type="button" class="pill-choice" data-val="730" onclick="selectDuration(this, 'cab')">2 Ans</button>
+                                <button type="button" class="pill-choice" data-val="lifetime" onclick="selectDuration(this, 'cab')">À Vie (Illimité)</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Postes Autorisés (Appareils)</label>
+                            <div class="devices-selector">
+                                <button type="button" class="pill-choice" data-val="1" onclick="selectDevices(this, 'cab')">1 Poste</button>
+                                <button type="button" class="pill-choice selected" data-val="3" onclick="selectDevices(this, 'cab')">3 Postes</button>
+                                <button type="button" class="pill-choice" data-val="5" onclick="selectDevices(this, 'cab')">5 Postes</button>
+                                <button type="button" class="pill-choice" data-val="10" onclick="selectDevices(this, 'cab')">10 Postes</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-generate" onclick="generateCabinetKey()">
+                        <span>⚡</span> Activer & Délivrer la Licence DocPocket Cab
+                    </button>
+
+                    <div class="result-container" id="result-cab">
+                        <div class="result-header">
+                            <span class="result-badge">✓ Licence Officielle Valide</span>
+                            <span id="cab-res-date" style="font-size:0.8rem; color:var(--text-muted)"></span>
+                        </div>
+                        <div class="key-box">
+                            <div class="key-text" id="cab-key-display">DPCAB-XX-XXXXXXXX-XXXX-XXXX</div>
+                        </div>
+                        <div class="result-details-row" id="cab-details-row"></div>
+                        <div class="actions-grid">
+                            <button class="act-btn btn-copy" onclick="copyResultKey('cab-key-display')">📋 Copier la Clé</button>
+                            <button class="act-btn btn-whatsapp" onclick="shareWhatsApp('DocPocket Cabinet', 'cab-key-display', 'cab_name')">💬 WhatsApp</button>
+                            <button class="act-btn btn-email" onclick="shareEmail('DocPocket Cabinet', 'cab-key-display', 'cab_name')">✉️ Email</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ONGLET 2 : DOCPOCKET MEDOC -->
+            <section class="app-panel" id="panel-medoc">
+                <div class="card-main">
+                    <div class="panel-header">
+                        <div class="panel-title-group">
+                            <h2>💊 DocPocket Medoc <span class="app-tag">Médicaments & Ordonnances</span></h2>
+                            <p>Licence médicale déterministe basée sur le hachage SHA-256 avec sel sécurisé</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label>Nom de famille *</label>
+                            <input type="text" id="medoc_nom" class="form-control" placeholder="Ex: Ben Khalifa">
+                        </div>
+                        <div class="form-group">
+                            <label>Prénom du Médecin *</label>
+                            <input type="text" id="medoc_prenom" class="form-control" placeholder="Ex: Mohamed">
+                        </div>
+                        <div class="form-group">
+                            <label>Numéro d'Ordre *</label>
+                            <input type="text" id="medoc_ordre" class="form-control" placeholder="Ex: 12345">
+                        </div>
+                    </div>
+
+                    <button class="btn-generate" onclick="generateMedocKey()">
+                        <span>⚡</span> Générer la Clé DocPocket Medoc
+                    </button>
+
+                    <div class="result-container" id="result-medoc">
+                        <div class="result-header">
+                            <span class="result-badge">✓ Format DOC-XXXX-XXXX-XXXX-XXXX</span>
+                        </div>
+                        <div class="key-box">
+                            <div class="key-text" id="medoc-key-display">DOC-0000-0000-0000-0000</div>
+                        </div>
+                        <div class="actions-grid">
+                            <button class="act-btn btn-copy" onclick="copyResultKey('medoc-key-display')">📋 Copier la Clé</button>
+                            <button class="act-btn btn-whatsapp" onclick="shareWhatsApp('DocPocket Medoc', 'medoc-key-display', 'medoc_nom')">💬 WhatsApp</button>
+                            <button class="act-btn btn-email" onclick="shareEmail('DocPocket Medoc', 'medoc-key-display', 'medoc_nom')">✉️ Email</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ONGLET 3 : DOCPOCKET SMS RDV -->
+            <section class="app-panel" id="panel-smsrdv">
+                <div class="card-main">
+                    <div class="panel-header">
+                        <div class="panel-title-group">
+                            <h2>📱 DocPocket SMS RDV <span class="app-tag">Rappels & Notifications</span></h2>
+                            <p>Générateur de clé d'activation pour la passerelle SMS cabinet</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nom du Médecin / Cabinet *</label>
+                        <input type="text" id="sms_nom" class="form-control" placeholder="Ex: Dr. Ben Khalifa Mohamed">
+                    </div>
+
+                    <button class="btn-generate" onclick="generateSmsKey()">
+                        <span>⚡</span> Générer la Clé DocPocket SMS RDV
+                    </button>
+
+                    <div class="result-container" id="result-smsrdv">
+                        <div class="result-header">
+                            <span class="result-badge">✓ Signature MD5 Cabinet</span>
+                        </div>
+                        <div class="key-box">
+                            <div class="key-text" id="sms-key-display">XXXX-XXXX-XXXX-XXXX</div>
+                        </div>
+                        <div class="actions-grid">
+                            <button class="act-btn btn-copy" onclick="copyResultKey('sms-key-display')">📋 Copier la Clé</button>
+                            <button class="act-btn btn-whatsapp" onclick="shareWhatsApp('DocPocket SMS RDV', 'sms-key-display', 'sms_nom')">💬 WhatsApp</button>
+                            <button class="act-btn btn-email" onclick="shareEmail('DocPocket SMS RDV', 'sms-key-display', 'sms_nom')">✉️ Email</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ONGLET 4 : MAILPOCKET PRO -->
+            <section class="app-panel" id="panel-mailpocket">
+                <div class="card-main">
+                    <div class="panel-header">
+                        <div class="panel-title-group">
+                            <h2>📧 MailPocket Pro <span class="app-tag">Courriers & Secrétariat</span></h2>
+                            <p>Licence officielle cryptographique avec segment lieu et ordre</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Nom du Médecin *</label>
+                            <input type="text" id="mail_nom" class="form-control" placeholder="Ex: Ben Khalifa">
+                        </div>
+                        <div class="form-group">
+                            <label>Prénom du Médecin *</label>
+                            <input type="text" id="mail_prenom" class="form-control" placeholder="Ex: Mohamed">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Numéro d'Ordre *</label>
+                            <input type="text" id="mail_ordre" class="form-control" placeholder="Ex: 12345">
+                        </div>
+                        <div class="form-group">
+                            <label>Emplacement / Gouvernorat *</label>
+                            <input type="text" id="mail_loc" class="form-control" placeholder="Ex: Tunis">
+                        </div>
+                    </div>
+
+                    <button class="btn-generate" onclick="generateMailPocketKey()">
+                        <span>⚡</span> Générer la Clé MailPocket Pro
+                    </button>
+
+                    <div class="result-container" id="result-mailpocket">
+                        <div class="result-header">
+                            <span class="result-badge">✓ Format MED-ORDRE-NOM-LIEU-SIGN</span>
+                        </div>
+                        <div class="key-box">
+                            <div class="key-text" id="mail-key-display">MED-00000-XXXXX-XXX-XXXXXX</div>
+                        </div>
+                        <div class="actions-grid">
+                            <button class="act-btn btn-copy" onclick="copyResultKey('mail-key-display')">📋 Copier la Clé</button>
+                            <button class="act-btn btn-whatsapp" onclick="shareWhatsApp('MailPocket Pro', 'mail-key-display', 'mail_nom')">💬 WhatsApp</button>
+                            <button class="act-btn btn-email" onclick="shareEmail('MailPocket Pro', 'mail-key-display', 'mail_nom')">✉️ Email</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ONGLET 5 : COMPTAPOCKET SMS -->
+            <section class="app-panel" id="panel-compta">
+                <div class="card-main">
+                    <div class="panel-header">
+                        <div class="panel-title-group">
+                            <h2>💼 ComptaPocket SMS <span class="app-tag">Cabinets Comptables</span></h2>
+                            <p>Générateur de clé de licence pour les cabinets d'expertise comptable</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nom du Bureau Comptable / Expert *</label>
+                        <input type="text" id="compta_nom" class="form-control" placeholder="Ex: Cabinet Ben Khelil & Associés">
+                    </div>
+
+                    <button class="btn-generate" onclick="generateComptaKey()">
+                        <span>⚡</span> Générer la Clé ComptaPocket SMS
+                    </button>
+
+                    <div class="result-container" id="result-compta">
+                        <div class="result-header">
+                            <span class="result-badge">✓ Signature MD5 Comptable</span>
+                        </div>
+                        <div class="key-box">
+                            <div class="key-text" id="compta-key-display">XXXX-XXXX-XXXX-XXXX</div>
+                        </div>
+                        <div class="actions-grid">
+                            <button class="act-btn btn-copy" onclick="copyResultKey('compta-key-display')">📋 Copier la Clé</button>
+                            <button class="act-btn btn-whatsapp" onclick="shareWhatsApp('ComptaPocket SMS', 'compta-key-display', 'compta_nom')">💬 WhatsApp</button>
+                            <button class="act-btn btn-email" onclick="shareEmail('ComptaPocket SMS', 'compta-key-display', 'compta_nom')">✉️ Email</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ONGLET 6 : DOCPOCKET PRO -->
+            <section class="app-panel" id="panel-pro">
+                <div class="card-main">
+                    <div class="panel-header">
+                        <div class="panel-title-group">
+                            <h2>⚡ DocPocket Pro <span class="app-tag">Édition Universelle</span></h2>
+                            <p>Licence nominative universelle encodée pour versions hybrides et wifi</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nom du Médecin *</label>
+                        <input type="text" id="pro_nom" class="form-control" placeholder="Ex: Dr. Ben Khaled">
+                    </div>
+
+                    <button class="btn-generate" onclick="generateProKey()">
+                        <span>⚡</span> Générer la Clé DocPocket Pro
+                    </button>
+
+                    <div class="result-container" id="result-pro">
+                        <div class="result-header">
+                            <span class="result-badge">✓ Format DOCPRO-[Base64]-2026</span>
+                        </div>
+                        <div class="key-box">
+                            <div class="key-text" id="pro-key-display">DOCPRO-XXXX-2026</div>
+                        </div>
+                        <div class="actions-grid">
+                            <button class="act-btn btn-copy" onclick="copyResultKey('pro-key-display')">📋 Copier la Clé</button>
+                            <button class="act-btn btn-whatsapp" onclick="shareWhatsApp('DocPocket Pro', 'pro-key-display', 'pro_nom')">💬 WhatsApp</button>
+                            <button class="act-btn btn-email" onclick="shareEmail('DocPocket Pro', 'pro-key-display', 'pro_nom')">✉️ Email</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ONGLET : FINPOCKET -->
+            <section class="app-panel" id="panel-finpocket">
+                <div class="card-main">
+                    <div class="panel-header">
+                        <div class="panel-title-group">
+                            <h2>📊 FinPocket <span class="app-tag">Finance & Facturation</span></h2>
+                            <p>Gestion financière, comptabilité simplifiée de cabinet et suivi des recettes</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Nom du Médecin / Cabinet *</label>
+                            <input type="text" id="fin_nom" class="form-control" placeholder="Ex: Dr. Ben Khalifa Mohamed">
+                        </div>
+                        <div class="form-group">
+                            <label>Numéro d'Ordre / Matricule *</label>
+                            <input type="text" id="fin_ordre" class="form-control" placeholder="Ex: 12345">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Durée de Validité</label>
+                            <div class="duration-selector">
+                                <button type="button" class="pill-choice selected" data-val="365" onclick="selectDuration(this, 'fin')">1 An (365j)</button>
+                                <button type="button" class="pill-choice" data-val="730" onclick="selectDuration(this, 'fin')">2 Ans</button>
+                                <button type="button" class="pill-choice" data-val="lifetime" onclick="selectDuration(this, 'fin')">À Vie (Illimité)</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre de Postes</label>
+                            <div class="devices-selector">
+                                <button type="button" class="pill-choice selected" data-val="1" onclick="selectDevices(this, 'fin')">1 Poste</button>
+                                <button type="button" class="pill-choice" data-val="3" onclick="selectDevices(this, 'fin')">3 Postes</button>
+                                <button type="button" class="pill-choice" data-val="5" onclick="selectDevices(this, 'fin')">5 Postes</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-generate" onclick="generateFinPocketKey()">
+                        <span>⚡</span> Générer la Clé FinPocket
+                    </button>
+
+                    <div class="result-container" id="result-finpocket">
+                        <div class="result-header">
+                            <span class="result-badge">✓ Format FIN-XXXX-XXXX-XXXX-XXXX</span>
+                            <span id="fin-res-date" style="font-size:0.8rem; color:var(--text-muted)"></span>
+                        </div>
+                        <div class="key-box">
+                            <div class="key-text" id="fin-key-display">FIN-0000-0000-0000-0000</div>
+                        </div>
+                        <div class="actions-grid">
+                            <button class="act-btn btn-copy" onclick="copyResultKey('fin-key-display')">📋 Copier la Clé</button>
+                            <button class="act-btn btn-whatsapp" onclick="shareWhatsApp('FinPocket', 'fin-key-display', 'fin_nom')">💬 WhatsApp</button>
+                            <button class="act-btn btn-email" onclick="shareEmail('FinPocket', 'fin-key-display', 'fin_nom')">✉️ Email</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ONGLET : GLYCOPOCKET -->
+            <section class="app-panel" id="panel-glycopocket">
+                <div class="card-main">
+                    <div class="panel-header">
+                        <div class="panel-title-group">
+                            <h2>🩸 GlycoPocket <span class="app-tag">Diabétologie & Glycémie</span></h2>
+                            <p>Suivi glycémique, carnet patient, HbA1c et protocoles d'insulinothérapie</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Nom du Médecin / Diabétologue *</label>
+                            <input type="text" id="glyco_nom" class="form-control" placeholder="Ex: Dr. Ben Khalifa Mohamed">
+                        </div>
+                        <div class="form-group">
+                            <label>Numéro d'Ordre *</label>
+                            <input type="text" id="glyco_ordre" class="form-control" placeholder="Ex: 12345">
+                        </div>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>Spécialité / Titre</label>
+                            <input type="text" id="glyco_spec" class="form-control" placeholder="Ex: Diabétologie / Endocrinologie">
+                        </div>
+                        <div class="form-group">
+                            <label>Durée de Validité</label>
+                            <div class="duration-selector">
+                                <button type="button" class="pill-choice selected" data-val="365" onclick="selectDuration(this, 'glyco')">1 An (365j)</button>
+                                <button type="button" class="pill-choice" data-val="730" onclick="selectDuration(this, 'glyco')">2 Ans</button>
+                                <button type="button" class="pill-choice" data-val="lifetime" onclick="selectDuration(this, 'glyco')">À Vie (Illimité)</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-generate" onclick="generateGlycoPocketKey()">
+                        <span>⚡</span> Générer la Clé GlycoPocket
+                    </button>
+
+                    <div class="result-container" id="result-glycopocket">
+                        <div class="result-header">
+                            <span class="result-badge">✓ Format GLYCO-XXXX-XXXX-XXXX-XXXX</span>
+                            <span id="glyco-res-date" style="font-size:0.8rem; color:var(--text-muted)"></span>
+                        </div>
+                        <div class="key-box">
+                            <div class="key-text" id="glyco-key-display">GLYCO-0000-0000-0000-0000</div>
+                        </div>
+                        <div class="actions-grid">
+                            <button class="act-btn btn-copy" onclick="copyResultKey('glyco-key-display')">📋 Copier la Clé</button>
+                            <button class="act-btn btn-whatsapp" onclick="shareWhatsApp('GlycoPocket', 'glyco-key-display', 'glyco_nom')">💬 WhatsApp</button>
+                            <button class="act-btn btn-email" onclick="shareEmail('GlycoPocket', 'glyco-key-display', 'glyco_nom')">✉️ Email</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ONGLET 7 : REGISTRE & HISTORIQUE UNIFIÉ -->
+            <section class="app-panel" id="panel-registry">
+                <div class="card-main">
+                    <div class="panel-header">
+                        <div class="panel-title-group">
+                            <h2>📜 Registre Central des Licences</h2>
+                            <p>Suivi en direct, recherche et synchronisation multi-applications</p>
+                        </div>
+                    </div>
+
+                    <div class="registry-toolbar">
+                        <div class="search-wrapper">
+                            <input type="text" id="registrySearch" class="form-control" placeholder="🔍 Rechercher praticien, n° ordre, ville, clé..." oninput="renderRegistryTable()">
+                        </div>
+                        <div style="display:flex; gap:8px">
+                            <select id="registryAppFilter" class="filter-select" onchange="renderRegistryTable()">
+                                <option value="all">Toutes les applications</option>
+                                <option value="DocPocket Cabinet">DocPocket Cabinet</option>
+                                <option value="DocPocket Medoc">DocPocket Medoc</option>
+                                <option value="DocPocket SMS RDV">DocPocket SMS RDV</option>
+                                <option value="MailPocket Pro">MailPocket Pro</option>
+                                <option value="ComptaPocket SMS">ComptaPocket SMS</option>
+                                <option value="DocPocket Pro">DocPocket Pro</option>
+                                <option value="FinPocket">FinPocket</option>
+                                <option value="GlycoPocket">GlycoPocket</option>
+                            </select>
+                            <button class="btn-table-action" onclick="syncFirebaseLicenses(true)" title="Actualiser depuis Firebase">🔄 Sync</button>
+                        </div>
+                    </div>
+
+                    <div class="registry-table-wrapper">
+                        <table class="reg-table">
+                            <thead>
+                                <tr>
+                                    <th>Application</th>
+                                    <th>Bénéficiaire / Praticien</th>
+                                    <th>Clé de Licence</th>
+                                    <th>Validité / Postes</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="registryTableBody">
+                                <!-- Lignes insérées en JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="registry-footer">
+                        <div style="font-size:0.84rem; color:var(--text-muted)">
+                            Total : <strong id="totalLicensesCount" style="color:#fff">0</strong> licence(s) enregistrée(s)
+                        </div>
+                        <div style="display:flex; gap:8px">
+                            <button class="btn-table-action" onclick="exportRegistryCSV()">📥 Exporter CSV</button>
+                            <button class="btn-table-action" onclick="exportRegistryJSON()">💾 Backup JSON</button>
+                            <button class="btn-table-action" onclick="triggerImportJSON()">📤 Restaurer JSON</button>
+                            <input type="file" id="jsonImportInput" style="display:none" accept=".json" onchange="handleImportJSON(event)">
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 3. MODALE DES PARAMÈTRES & CONFIGURATION FIREBASE -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>⚙️ Paramètres de la Console</h3>
+                <button class="btn-close-modal" onclick="closeSettingsModal()">✕</button>
+            </div>
+
+            <!-- SECTION SÉCURITÉ : CODE PIN -->
+            <div class="modal-section">
+                <div class="modal-section-title">🔒 Modifier le Code PIN Maître</div>
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label>PIN Actuel</label>
+                        <input type="password" id="currentPinInput" class="form-control" maxlength="8" placeholder="Ex: 1980">
+                    </div>
+                    <div class="form-group">
+                        <label>Nouveau PIN</label>
+                        <input type="password" id="newPinInput" class="form-control" maxlength="8" placeholder="Nouveau code">
+                    </div>
+                </div>
+                <button class="act-btn" style="background:#0284c7; color:#fff" onclick="handleChangePin()">Mettre à jour le PIN</button>
+            </div>
+
+            <!-- SECTION FIREBASE : REALTIME DATABASE -->
+            <div class="modal-section">
+                <div class="modal-section-title">🔥 Connexion Firebase Realtime Database</div>
+                <div class="form-group">
+                    <label>URL Firebase Realtime Database</label>
+                    <input type="text" id="fbUrlInput" class="form-control" placeholder="https://votre-projet.firebaseio.com">
+                </div>
+                <div class="form-group">
+                    <label>Auth Token / Secret (Optionnel)</label>
+                    <input type="password" id="fbAuthInput" class="form-control" placeholder="Token d'authentification">
+                </div>
+                <div style="display:flex; gap:10px">
+                    <button class="act-btn" style="background:#22c55e; color:#fff" onclick="testFirebaseConnection()">Tester Connexion</button>
+                    <button class="act-btn" style="background:var(--gold); color:#070d1e" onclick="saveFirebaseSettings()">Enregistrer & Synchroniser</button>
+                </div>
+                <div id="fbTestMsg" class="test-msg"></div>
+            </div>
+
+            <!-- SECTION GESTION DONNÉES -->
+            <div class="modal-section" style="border-bottom:none">
+                <div class="modal-section-title">🗑️ Maintenance & Registre</div>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px">
+                    Effacer le registre local réinitialise l'historique sur cet appareil sans impacter la base Firebase distante.
+                </p>
+                <button class="act-btn" style="background:rgba(239, 68, 68, 0.2); color:#f87171; border:1px solid #ef4444" onclick="clearLocalRegistry()">
+                    Vider le Registre Local
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST POPUP -->
+    <div id="toastBox">
+        <span id="toastIcon">✓</span>
+        <span id="toastText">Message</span>
+    </div>
+
+    <!-- LOGIQUE DE FONCTIONNEMENT & CRYPTOGRAPHIE AUTONOME -->
+    <script>
+        // ==============================================================
+        // CONSTANTES & CLÉS DE SÉCURITÉ
+        // ==============================================================
+        const STORAGE_PIN_KEY = 'docpocket_keygen_master_pin';
+        const STORAGE_REGISTRY_KEY = 'docpocket_unified_registry';
+        const STORAGE_FB_URL_KEY = 'docpocket_keygen_firebase_url';
+        const STORAGE_FB_AUTH_KEY = 'docpocket_keygen_firebase_auth';
+
+        // Sels cryptographiques officiels de chaque application
+        const SALT_CABINET = 'DOCPOCKET_CABINET_PRO_SECURITY_SALT_2026';
+        const SALT_MEDOC = 'DOCPOCKET_MEDOCS_TUNISIE_2026_SECURE_SALT';
+        const SALT_SMS = 'MEDWIN_SEC_2026';
+        const SALT_MAIL = 'MAILPOCKET_PRO_MED_SECURE_SALT_2026';
+        const SALT_COMPTA = 'COMPTA_SEC_2026';
+        const SALT_FINPOCKET = 'FINPOCKET_PRO_SECURE_SALT_2026';
+        const SALT_GLYCOPOCKET = 'GLYCOPOCKET_DIAB_SECURE_SALT_2026';
+
+        let currentEnteredPin = '';
+        let inactivityTimer = null;
+        const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+
+        // ==============================================================
+        // GESTION DU CODE PIN & ÉCRAN DE VERROUILLAGE
+        // ==============================================================
+        function getMasterPin() {
+            try {
+                return localStorage.getItem(STORAGE_PIN_KEY) || '1980';
+            } catch {
+                return '1980';
+            }
+        }
+
+        function pressPin(digit) {
+            if (currentEnteredPin.length >= 8) return;
+            currentEnteredPin += digit;
+            updatePinDots();
+            if (currentEnteredPin.length === 4) {
+                // Auto check si longueur 4
+                if (currentEnteredPin === getMasterPin()) {
+                    unlockApp();
+                }
+            }
+        }
+
+        function clearPin() {
+            currentEnteredPin = '';
+            updatePinDots();
+            document.getElementById('pinErrorMsg').innerText = '';
+        }
+
+        function updatePinDots() {
+            for (let i = 0; i < 4; i++) {
+                const dot = document.getElementById(`dot${i}`);
+                if (dot) {
+                    if (i < currentEnteredPin.length) dot.classList.add('filled');
+                    else dot.classList.remove('filled');
+                }
+            }
+        }
+
+        function submitPin() {
+            const masterPin = getMasterPin();
+            if (currentEnteredPin === masterPin) {
+                unlockApp();
+            } else {
+                const lockContainer = document.querySelector('.lock-container');
+                lockContainer.classList.add('shake');
+                const err = document.getElementById('pinErrorMsg');
+                err.innerText = 'Code PIN incorrect. Veuillez réessayer.';
+                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                setTimeout(() => {
+                    lockContainer.classList.remove('shake');
+                    clearPin();
+                }, 400);
+            }
+        }
+
+        function unlockApp() {
+            document.getElementById('lockScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'flex';
+            currentEnteredPin = '';
+            updatePinDots();
+            resetInactivityTimer();
+            initApp();
+        }
+
+        function lockApp() {
+            document.getElementById('mainApp').style.display = 'none';
+            document.getElementById('lockScreen').style.display = 'flex';
+            currentEnteredPin = '';
+            updatePinDots();
+            clearTimeout(inactivityTimer);
+        }
+
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => {
+                lockApp();
+            }, INACTIVITY_TIMEOUT_MS);
+        }
+
+        ['click', 'touchstart', 'keydown', 'mousemove'].forEach(evt => {
+            window.addEventListener(evt, resetInactivityTimer, { passive: true });
+        });
+
+        // Écoute des touches du clavier pour le PIN
+        window.addEventListener('keydown', (e) => {
+            if (document.getElementById('lockScreen').style.display !== 'none') {
+                if (e.key >= '0' && e.key <= '9') {
+                    pressPin(e.key);
+                } else if (e.key === 'Backspace') {
+                    clearPin();
+                } else if (e.key === 'Enter') {
+                    submitPin();
+                }
+            }
+        });
+
+        // ==============================================================
+        // NAVIGATION PAR ONGLETS
+        // ==============================================================
+        function switchTab(panelId) {
+            document.querySelectorAll('.app-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            const targetPanel = document.getElementById(`panel-${panelId}`);
+            if (targetPanel) targetPanel.classList.add('active');
+
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            tabButtons.forEach(btn => {
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(panelId)) {
+                    btn.classList.add('active');
+                }
+            });
+
+            if (panelId === 'registry') {
+                renderRegistryTable();
+            }
+        }
+
+        // ==============================================================
+        // CRYPTOGRAPHIE EMBARQUÉE (100% OFFLINE)
+        // ==============================================================
+        // 1. MD5 pur JavaScript conforme RFC 1321
+        function md5(s) {
+            function safeAdd(x, y) {
+                const lsw = (x & 0xffff) + (y & 0xffff);
+                const msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+                return (msw << 16) | (lsw & 0xffff);
+            }
+            function bitRol(num, cnt) { return (num << cnt) | (num >>> (32 - cnt)); }
+            function md5cmn(q, a, b, x, s, t) { return safeAdd(bitRol(safeAdd(safeAdd(a, q), safeAdd(x, t)), s), b); }
+            function md5ff(a, b, c, d, x, s, t) { return md5cmn((b & c) | (~b & d), a, b, x, s, t); }
+            function md5gg(a, b, c, d, x, s, t) { return md5cmn((b & d) | (c & ~d), a, b, x, s, t); }
+            function md5hh(a, b, c, d, x, s, t) { return md5cmn(b ^ c ^ d, a, b, x, s, t); }
+            function md5ii(a, b, c, d, x, s, t) { return md5cmn(c ^ (b | ~d), a, b, x, s, t); }
+            function binlMD5(x, len) {
+                x[len >> 5] |= 0x80 << (len % 32);
+                x[(((len + 64) >>> 9) << 4) + 14] = len;
+                let a = 1732584193, b = -271733879, c = -1732584194, d = 271733878;
+                for (let i = 0; i < x.length; i += 16) {
+                    const olda = a, oldb = b, oldc = c, oldd = d;
+                    a = md5ff(a, b, c, d, x[i], 7, -680876936); d = md5ff(d, a, b, c, x[i + 1], 12, -389564586);
+                    c = md5ff(c, d, a, b, x[i + 2], 17, 606105819); b = md5ff(b, c, d, a, x[i + 3], 22, -1044525330);
+                    a = md5ff(a, b, c, d, x[i + 4], 7, -176418897); d = md5ff(d, a, b, c, x[i + 5], 12, 1200080426);
+                    c = md5ff(c, d, a, b, x[i + 6], 17, -1473231341); b = md5ff(b, c, d, a, x[i + 7], 22, -45705983);
+                    a = md5ff(a, b, c, d, x[i + 8], 7, 1770035416); d = md5ff(d, a, b, c, x[i + 9], 12, -1958414417);
+                    c = md5ff(c, d, a, b, x[i + 10], 17, -42063); b = md5ff(b, c, d, a, x[i + 11], 22, -1990404162);
+                    a = md5ff(a, b, c, d, x[i + 12], 7, 1804603682); d = md5ff(d, a, b, c, x[i + 13], 12, -40341101);
+                    c = md5ff(c, d, a, b, x[i + 14], 17, -1502002290); b = md5ff(b, c, d, a, x[i + 15], 22, 1236535329);
+
+                    a = md5gg(a, b, c, d, x[i + 1], 5, -165796510); d = md5gg(d, a, b, c, x[i + 6], 9, -1069501632);
+                    c = md5gg(c, d, a, b, x[i + 11], 14, 643717713); b = md5gg(b, c, d, a, x[i], 20, -373897302);
+                    a = md5gg(a, b, c, d, x[i + 5], 5, -701558691); d = md5gg(d, a, b, c, x[i + 10], 9, 38016083);
+                    c = md5gg(c, d, a, b, x[i + 15], 14, -660478335); b = md5gg(b, c, d, a, x[i + 4], 20, -405537848);
+                    a = md5gg(a, b, c, d, x[i + 9], 5, 568446438); d = md5gg(d, a, b, c, x[i + 14], 9, -1019803690);
+                    c = md5gg(c, d, a, b, x[i + 3], 14, -187363961); b = md5gg(b, c, d, a, x[i + 8], 20, 1163531501);
+                    a = md5gg(a, b, c, d, x[i + 13], 5, -1444681467); d = md5gg(d, a, b, c, x[i + 2], 9, -51403784);
+                    c = md5gg(c, d, a, b, x[i + 7], 14, 1735328473); b = md5gg(b, c, d, a, x[i + 12], 20, -1926607734);
+
+                    a = md5hh(a, b, c, d, x[i + 5], 4, -378558); d = md5hh(d, a, b, c, x[i + 8], 11, -2022574463);
+                    c = md5hh(c, d, a, b, x[i + 11], 16, 1839030562); b = md5hh(b, c, d, a, x[i + 14], 23, -35309556);
+                    a = md5hh(a, b, c, d, x[i + 1], 4, -1530992060); d = md5hh(d, a, b, c, x[i + 4], 11, 1272893353);
+                    c = md5hh(c, d, a, b, x[i + 7], 16, -155497632); b = md5hh(b, c, d, a, x[i + 10], 23, -1094730640);
+                    a = md5hh(a, b, c, d, x[i + 13], 4, 681279174); d = md5hh(d, a, b, c, x[i], 11, -358537222);
+                    c = md5hh(c, d, a, b, x[i + 3], 16, -722521979); b = md5hh(b, c, d, a, x[i + 6], 23, 76029189);
+                    a = md5hh(a, b, c, d, x[i + 9], 4, -640364487); d = md5hh(d, a, b, c, x[i + 12], 11, -421815835);
+                    c = md5hh(c, d, a, b, x[i + 15], 16, 530742520); b = md5hh(b, c, d, a, x[i + 2], 23, -995338651);
+
+                    a = md5ii(a, b, c, d, x[i], 6, -198630844); d = md5ii(d, a, b, c, x[i + 7], 10, 1126891415);
+                    c = md5ii(c, d, a, b, x[i + 14], 15, -1416354905); b = md5ii(b, c, d, a, x[i + 5], 21, -57434055);
+                    a = md5ii(a, b, c, d, x[i + 12], 6, 1700485571); d = md5ii(d, a, b, c, x[i + 3], 10, -1894986606);
+                    c = md5ii(c, d, a, b, x[i + 10], 15, -1051523); b = md5ii(b, c, d, a, x[i + 1], 21, -2054922799);
+                    a = md5ii(a, b, c, d, x[i + 8], 6, 1873313359); d = md5ii(d, a, b, c, x[i + 15], 10, -30611744);
+                    c = md5ii(c, d, a, b, x[i + 6], 15, -1560198380); b = md5ii(b, c, d, a, x[i + 13], 21, 1309151649);
+                    a = md5ii(a, b, c, d, x[i + 4], 6, -145523070); d = md5ii(d, a, b, c, x[i + 11], 10, -1120210379);
+                    c = md5ii(c, d, a, b, x[i + 2], 15, 718787259); b = md5ii(b, c, d, a, x[i + 9], 21, -343485551);
+
+                    a = safeAdd(a, olda); b = safeAdd(b, oldb); c = safeAdd(c, oldc); d = safeAdd(d, oldd);
+                }
+                return [a, b, c, d];
+            }
+            function rhex(n) {
+                let s = "", j = 0;
+                const hexChr = "0123456789abcdef";
+                for (; j < 4; j++) s += hexChr.charAt((n >> (j * 8 + 4)) & 0x0f) + hexChr.charAt((n >> (j * 8)) & 0x0f);
+                return s;
+            }
+            const utf8 = unescape(encodeURIComponent(s));
+            const bin = [];
+            for (let i = 0; i < utf8.length * 8; i += 8) bin[i >> 5] |= (utf8.charCodeAt(i / 8) & 255) << (i % 32);
+            const res = binlMD5(bin, utf8.length * 8);
+            let str = "";
+            for (let i = 0; i < res.length; i++) str += rhex(res[i]);
+            return str;
+        }
+
+        // 2. SHA-256 via Web Crypto API (SubtleCrypto)
+        async function sha256Hex(text) {
+            const enc = new TextEncoder();
+            const data = enc.encode(text);
+            const buf = await crypto.subtle.digest('SHA-256', data);
+            const arr = Array.from(new Uint8Array(buf));
+            return arr.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+        }
+
+        // 3. Fonctions de hachage Cabinet djb2
+        function computeChecksumCab(str) {
+            let hash = 5381;
+            const combined = str + SALT_CABINET;
+            for (let i = 0; i < combined.length; i++) {
+                hash = ((hash << 5) + hash) + combined.charCodeAt(i);
+                hash = hash & 0xFFFFFFFF;
+            }
+            const hex = Math.abs(hash).toString(16).toUpperCase().padStart(4, '0');
+            return hex.slice(0, 4);
+        }
+
+        function computeDoctorSerialCab(nom, prenom, ordreId) {
+            const cleanOrdre = (ordreId || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+            const combined = `${nom || ''} ${prenom || ''}`
+                .toLowerCase()
+                .replace(/^(dr\.?|docteur)\s+/i, '')
+                .trim();
+            const words = combined.split(/[\s,._-]+/).filter(w => w.length > 0).sort();
+            const seed = `${words.join('_')}_${cleanOrdre}`;
+            let hash = 5381;
+            for (let i = 0; i < seed.length; i++) {
+                hash = ((hash << 5) + hash) + seed.charCodeAt(i);
+                hash = hash & 0xFFFFFFFF;
+            }
+            return Math.abs(hash).toString(16).toUpperCase().padStart(4, '0').slice(0, 4);
+        }
+
+        function sanitizeAlpha(input) {
+            let str = (input || '').trim().toUpperCase();
+            str = str
+                .replace(/[ÀÁÂÃÄÅ]/g, 'A')
+                .replace(/[ÈÉÊË]/g, 'E')
+                .replace(/[ÌÍÎÏ]/g, 'I')
+                .replace(/[ÒÓÔÕÖ]/g, 'O')
+                .replace(/[ÙÚÛÜ]/g, 'U')
+                .replace(/[Ç]/g, 'C');
+            return str.replace(/[^A-Z0-9]/g, '');
+        }
+
+        // ==============================================================
+        // SÉLECTEURS DE DURÉE & POSTES (CABINET)
+        // ==============================================================
+        let cabSelectedDuration = '365';
+        let cabSelectedDevices = 3;
+        let finSelectedDuration = '365';
+        let finSelectedDevices = 1;
+        let glycoSelectedDuration = '365';
+
+        function selectDuration(btn, app) {
+            btn.parentElement.querySelectorAll('.pill-choice').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            if (app === 'cab') cabSelectedDuration = btn.dataset.val;
+            else if (app === 'fin') finSelectedDuration = btn.dataset.val;
+            else if (app === 'glyco') glycoSelectedDuration = btn.dataset.val;
+            else cabSelectedDuration = btn.dataset.val;
+        }
+
+        function selectDevices(btn, app) {
+            btn.parentElement.querySelectorAll('.pill-choice').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            if (app === 'cab') cabSelectedDevices = parseInt(btn.dataset.val, 10) || 3;
+            else if (app === 'fin') finSelectedDevices = parseInt(btn.dataset.val, 10) || 1;
+            else cabSelectedDevices = parseInt(btn.dataset.val, 10) || 3;
+        }
+
+        function calculateExpiryDateStr(duration) {
+            if (duration === 'lifetime') return '2099-12-31';
+            const days = parseInt(duration, 10) || 365;
+            const d = new Date();
+            d.setDate(d.getDate() + days);
+            return d.toISOString().slice(0, 10);
+        }
+
+        // ==============================================================
+        // 1. GÉNÉRATION DOCPOCKET CABINET
+        // ==============================================================
+        function generateCabinetKey() {
+            const name = document.getElementById('cab_name').value.trim();
+            const ordre = document.getElementById('cab_ordre').value.trim();
+            const spec = document.getElementById('cab_spec').value.trim() || 'Médecine Générale';
+            const ville = document.getElementById('cab_ville').value.trim();
+            const tel = document.getElementById('cab_tel').value.trim();
+
+            if (!name) {
+                showToast('Veuillez saisir le nom du médecin.', '⚠️');
+                document.getElementById('cab_name').focus();
+                return;
+            }
+
+            const expiryStr = calculateExpiryDateStr(cabSelectedDuration);
+            const cleanDate = expiryStr.replace(/-/g, '');
+            const serial = computeDoctorSerialCab(name, '', ordre);
+            const devCode = String(cabSelectedDevices).padStart(2, '0').slice(0, 2);
+
+            const payload = `${devCode}${cleanDate}${serial}`;
+            const checksum = computeChecksumCab(payload);
+            const fullKey = `DPCAB-${devCode}-${cleanDate}-${serial}-${checksum}`;
+
+            document.getElementById('cab-key-display').innerText = fullKey;
+            document.getElementById('cab-res-date').innerText = cabSelectedDuration === 'lifetime' ? 'Validité : Illimitée (À Vie)' : `Échéance : ${expiryStr}`;
+            document.getElementById('cab-details-row').innerHTML = `
+                <span>👨‍⚕️ ${name}</span>
+                <span>🩺 ${spec}</span>
+                <span>📍 ${ville || 'Tunisie'}</span>
+                <span>💻 ${cabSelectedDevices} Poste(s)</span>
+                <span>⏳ ${cabSelectedDuration === 'lifetime' ? 'À vie' : cabSelectedDuration + ' jours'}</span>
+            `;
+            document.getElementById('result-cab').style.display = 'block';
+
+            // Enregistrer dans le registre
+            saveLicenseRecord({
+                app: 'DocPocket Cabinet',
+                doctorName: name,
+                orderNumber: ordre,
+                specialite: spec,
+                city: ville,
+                phone: tel,
+                key: fullKey,
+                maxDevices: cabSelectedDevices,
+                duration: cabSelectedDuration,
+                expiryDate: expiryStr,
+                status: 'active'
+            });
+
+            showToast('Licence DocPocket Cab délivrée avec succès !', '✅');
+        }
+
+        // ==============================================================
+        // 2. GÉNÉRATION DOCPOCKET MEDOC
+        // ==============================================================
+        async function generateMedocKey() {
+            const nom = document.getElementById('medoc_nom').value.trim();
+            const prenom = document.getElementById('medoc_prenom').value.trim();
+            const ordre = document.getElementById('medoc_ordre').value.trim();
+
+            if (!nom || !prenom) {
+                showToast('Veuillez saisir le nom et prénom du médecin.', '⚠️');
+                return;
+            }
+
+            const cleanNom = nom.toUpperCase().replace(/\s+/g, ' ');
+            const cleanPrenom = prenom.toUpperCase().replace(/\s+/g, ' ');
+            const cleanOrder = ordre;
+
+            const raw = `${cleanNom}|${cleanPrenom}|${cleanOrder}|${SALT_MEDOC}`;
+            const digest = await sha256Hex(raw);
+
+            const b1 = digest.substring(0, 4);
+            const b2 = digest.substring(4, 8);
+            const b3 = digest.substring(8, 12);
+            const b4 = digest.substring(12, 16);
+
+            const fullKey = `DOC-${b1}-${b2}-${b3}-${b4}`;
+
+            document.getElementById('medoc-key-display').innerText = fullKey;
+            document.getElementById('result-medoc').style.display = 'block';
+
+            saveLicenseRecord({
+                app: 'DocPocket Medoc',
+                doctorName: `${cleanNom} ${cleanPrenom}`,
+                orderNumber: cleanOrder,
+                key: fullKey,
+                expiryDate: calculateExpiryDateStr('365'),
+                status: 'active'
+            });
+
+            showToast('Clé DocPocket Medoc générée !', '✅');
+        }
+
+        // ==============================================================
+        // 3. GÉNÉRATION DOCPOCKET SMS RDV
+        // ==============================================================
+        function generateSmsKey() {
+            const nom = document.getElementById('sms_nom').value.trim();
+            if (!nom) {
+                showToast('Veuillez saisir le nom du médecin.', '⚠️');
+                return;
+            }
+
+            const cleanName = nom.toUpperCase();
+            const raw = cleanName + SALT_SMS;
+            const hash = md5(raw).toUpperCase();
+            const base = hash.substring(0, 16);
+            const fullKey = `${base.substring(0, 4)}-${base.substring(4, 8)}-${base.substring(8, 12)}-${base.substring(12, 16)}`;
+
+            document.getElementById('sms-key-display').innerText = fullKey;
+            document.getElementById('result-smsrdv').style.display = 'block';
+
+            saveLicenseRecord({
+                app: 'DocPocket SMS RDV',
+                doctorName: cleanName,
+                key: fullKey,
+                expiryDate: calculateExpiryDateStr('365'),
+                status: 'active'
+            });
+
+            showToast('Clé DocPocket SMS RDV générée !', '✅');
+        }
+
+        // ==============================================================
+        // 4. GÉNÉRATION MAILPOCKET PRO
+        // ==============================================================
+        async function generateMailPocketKey() {
+            const nom = document.getElementById('mail_nom').value.trim();
+            const prenom = document.getElementById('mail_prenom').value.trim();
+            const ordre = document.getElementById('mail_ordre').value.trim();
+            const loc = document.getElementById('mail_loc').value.trim();
+
+            if (!nom || !prenom || !ordre) {
+                showToast('Veuillez renseigner le nom, prénom et n° d\'ordre.', '⚠️');
+                return;
+            }
+
+            const cleanNom = sanitizeAlpha(nom);
+            const cleanPrenom = sanitizeAlpha(prenom);
+            const cleanOrder = sanitizeAlpha(ordre);
+            const cleanLoc = sanitizeAlpha(loc);
+
+            const orderSegment = cleanOrder.padStart(5, '0');
+            const nameSegment = (cleanNom.length >= 3 ? cleanNom.substring(0, 3) : cleanNom.padEnd(3, 'X')) +
+                                (cleanPrenom.length >= 2 ? cleanPrenom.substring(0, 2) : cleanPrenom.padEnd(2, 'X'));
+            const locSegment = cleanLoc.length >= 3 ? cleanLoc.substring(0, 3) : (cleanLoc.length === 0 ? 'MED' : cleanLoc.padEnd(3, 'X'));
+
+            const payload = `${cleanNom}|${cleanPrenom}|${cleanOrder}|${cleanLoc}|${SALT_MAIL}`;
+            const digest = await sha256Hex(payload);
+            const signature = digest.substring(0, 6);
+
+            const fullKey = `MED-${orderSegment}-${nameSegment}-${locSegment}-${signature}`;
+
+            document.getElementById('mail-key-display').innerText = fullKey;
+            document.getElementById('result-mailpocket').style.display = 'block';
+
+            saveLicenseRecord({
+                app: 'MailPocket Pro',
+                doctorName: `${nom} ${prenom}`,
+                orderNumber: ordre,
+                city: loc,
+                key: fullKey,
+                expiryDate: calculateExpiryDateStr('365'),
+                status: 'active'
+            });
+
+            showToast('Clé MailPocket Pro générée !', '✅');
+        }
+
+        // ==============================================================
+        // 5. GÉNÉRATION COMPTAPOCKET SMS
+        // ==============================================================
+        function generateComptaKey() {
+            const nom = document.getElementById('compta_nom').value.trim();
+            if (!nom) {
+                showToast('Veuillez saisir le nom du cabinet comptable.', '⚠️');
+                return;
+            }
+
+            const cleanName = nom.toUpperCase();
+            const raw = cleanName + SALT_COMPTA;
+            const hash = md5(raw).toUpperCase();
+            const base = hash.substring(0, 16);
+            const fullKey = `${base.substring(0, 4)}-${base.substring(4, 8)}-${base.substring(8, 12)}-${base.substring(12, 16)}`;
+
+            document.getElementById('compta-key-display').innerText = fullKey;
+            document.getElementById('result-compta').style.display = 'block';
+
+            saveLicenseRecord({
+                app: 'ComptaPocket SMS',
+                doctorName: cleanName,
+                key: fullKey,
+                expiryDate: calculateExpiryDateStr('365'),
+                status: 'active'
+            });
+
+            showToast('Clé ComptaPocket SMS générée !', '✅');
+        }
+
+        // ==============================================================
+        // 6. GÉNÉRATION DOCPOCKET PRO
+        // ==============================================================
+        function generateProKey() {
+            const nom = document.getElementById('pro_nom').value.trim();
+            if (!nom) {
+                showToast('Veuillez saisir le nom du médecin.', '⚠️');
+                return;
+            }
+
+            try {
+                const encodedName = btoa(unescape(encodeURIComponent(nom)));
+                const fullKey = `DOCPRO-${encodedName}-2026`;
+
+                document.getElementById('pro-key-display').innerText = fullKey;
+                document.getElementById('result-pro').style.display = 'block';
+
+                saveLicenseRecord({
+                    app: 'DocPocket Pro',
+                    doctorName: nom,
+                    key: fullKey,
+                    expiryDate: calculateExpiryDateStr('365'),
+                    status: 'active'
+                });
+
+                showToast('Clé DocPocket Pro générée !', '✅');
+            } catch (err) {
+                showToast('Erreur encodage caractères : ' + err.message, '❌');
+            }
+        }
+
+        // ==============================================================
+        // 7. GÉNÉRATION FINPOCKET
+        // ==============================================================
+        async function generateFinPocketKey() {
+            const nom = document.getElementById('fin_nom').value.trim();
+            const ordre = document.getElementById('fin_ordre').value.trim();
+
+            if (!nom) {
+                showToast('Veuillez saisir le nom du praticien ou du cabinet.', '⚠️');
+                document.getElementById('fin_nom').focus();
+                return;
+            }
+
+            const cleanNom = sanitizeAlpha(nom);
+            const cleanOrdre = sanitizeAlpha(ordre);
+            const raw = `${cleanNom}|${cleanOrdre}|${finSelectedDevices}|${finSelectedDuration}|${SALT_FINPOCKET}`;
+            const digest = await sha256Hex(raw);
+
+            const b1 = digest.substring(0, 4);
+            const b2 = digest.substring(4, 8);
+            const b3 = digest.substring(8, 12);
+            const b4 = digest.substring(12, 16);
+            const fullKey = `FIN-${b1}-${b2}-${b3}-${b4}`;
+
+            const expiryStr = calculateExpiryDateStr(finSelectedDuration);
+            document.getElementById('fin-key-display').innerText = fullKey;
+            document.getElementById('fin-res-date').innerText = finSelectedDuration === 'lifetime' ? 'Validité : Illimitée (À Vie)' : `Échéance : ${expiryStr}`;
+            document.getElementById('result-finpocket').style.display = 'block';
+
+            saveLicenseRecord({
+                app: 'FinPocket',
+                doctorName: nom,
+                orderNumber: ordre,
+                key: fullKey,
+                maxDevices: finSelectedDevices,
+                duration: finSelectedDuration,
+                expiryDate: expiryStr,
+                status: 'active'
+            });
+
+            showToast('Clé FinPocket générée avec succès !', '✅');
+        }
+
+        // ==============================================================
+        // 8. GÉNÉRATION GLYCOPOCKET
+        // ==============================================================
+        async function generateGlycoPocketKey() {
+            const nom = document.getElementById('glyco_nom').value.trim();
+            const ordre = document.getElementById('glyco_ordre').value.trim();
+            const spec = document.getElementById('glyco_spec').value.trim() || 'Diabétologie';
+
+            if (!nom) {
+                showToast('Veuillez saisir le nom du médecin / diabétologue.', '⚠️');
+                document.getElementById('glyco_nom').focus();
+                return;
+            }
+
+            const cleanNom = sanitizeAlpha(nom);
+            const cleanOrdre = sanitizeAlpha(ordre);
+            const raw = `${cleanNom}|${cleanOrdre}|${glycoSelectedDuration}|${SALT_GLYCOPOCKET}`;
+            const digest = await sha256Hex(raw);
+
+            const b1 = digest.substring(0, 4);
+            const b2 = digest.substring(4, 8);
+            const b3 = digest.substring(8, 12);
+            const b4 = digest.substring(12, 16);
+            const fullKey = `GLYCO-${b1}-${b2}-${b3}-${b4}`;
+
+            const expiryStr = calculateExpiryDateStr(glycoSelectedDuration);
+            document.getElementById('glyco-key-display').innerText = fullKey;
+            document.getElementById('glyco-res-date').innerText = glycoSelectedDuration === 'lifetime' ? 'Validité : Illimitée (À Vie)' : `Échéance : ${expiryStr}`;
+            document.getElementById('result-glycopocket').style.display = 'block';
+
+            saveLicenseRecord({
+                app: 'GlycoPocket',
+                doctorName: nom,
+                orderNumber: ordre,
+                specialite: spec,
+                key: fullKey,
+                duration: glycoSelectedDuration,
+                expiryDate: expiryStr,
+                status: 'active'
+            });
+
+            showToast('Clé GlycoPocket générée avec succès !', '✅');
+        }
+
+        // ==============================================================
+        // OUTILS DE COPIE & PARTAGE (WHATSAPP, EMAIL)
+        // ==============================================================
+        function copyResultKey(elementId) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const text = el.innerText.trim();
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Clé copiée dans le presse-papiers !', '📋');
+            }).catch(() => {
+                showToast('Erreur lors de la copie', '❌');
+            });
+        }
+
+        function shareWhatsApp(appName, keyId, nameInputId) {
+            const key = document.getElementById(keyId).innerText.trim();
+            const inputEl = document.getElementById(nameInputId);
+            const name = inputEl ? inputEl.value.trim() : 'Docteur';
+
+            const msg = `Bonjour ${name},\n\nVoici votre clé d'activation officielle pour *${appName}* :\n🔑 *${key}*\n\nPour l'activer, ouvrez l'application et collez cette clé dans l'écran d'enregistrement.\n\nCordialement,\nSupport DocPocket & MedWin`;
+            const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+        }
+
+        function shareEmail(appName, keyId, nameInputId) {
+            const key = document.getElementById(keyId).innerText.trim();
+            const inputEl = document.getElementById(nameInputId);
+            const name = inputEl ? inputEl.value.trim() : 'Docteur';
+
+            const subject = `Votre clé de licence officielle - ${appName}`;
+            const body = `Bonjour ${name},\n\nVotre licence pour ${appName} a été validée avec succès.\n\nClé de licence : ${key}\n\nVeuillez la coller lors du premier démarrage du logiciel pour activer vos droits.\n\nCordialement,\nService Technique DocPocket & MedWin`;
+
+            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+
+        // ==============================================================
+        // GESTION DU REGISTRE UNIFIÉ (LOCALSTORAGE + FIREBASE)
+        // ==============================================================
+        function getUnifiedRegistry() {
+            try {
+                const raw = localStorage.getItem(STORAGE_REGISTRY_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch {
+                return [];
+            }
+        }
+
+        function saveRegistry(list) {
+            try {
+                localStorage.setItem(STORAGE_REGISTRY_KEY, JSON.stringify(list));
+            } catch (e) {
+                console.warn('Erreur stockage registre', e);
+            }
+            updateRegistryCountBadge();
+        }
+
+        function saveLicenseRecord(record) {
+            const registry = getUnifiedRegistry();
+            const existingIdx = registry.findIndex(r => r.key === record.key);
+
+            const docData = {
+                id: record.id || 'lic_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                app: record.app || 'DocPocket',
+                doctorName: record.doctorName || '',
+                orderNumber: record.orderNumber || '',
+                specialite: record.specialite || '',
+                city: record.city || '',
+                phone: record.phone || '',
+                key: record.key,
+                maxDevices: record.maxDevices || 1,
+                duration: record.duration || '365',
+                expiryDate: record.expiryDate || calculateExpiryDateStr('365'),
+                status: record.status || 'active',
+                createdAt: record.createdAt || new Date().toISOString()
+            };
+
+            if (existingIdx >= 0) {
+                registry[existingIdx] = { ...registry[existingIdx], ...docData };
+            } else {
+                registry.unshift(docData);
+            }
+
+            saveRegistry(registry);
+            renderRegistryTable();
+
+            // Pousser vers Firebase si configuré
+            pushLicenseToFirebase(docData);
+        }
+
+        function renderRegistryTable() {
+            const tbody = document.getElementById('registryTableBody');
+            if (!tbody) return;
+
+            const search = (document.getElementById('registrySearch').value || '').toLowerCase().trim();
+            const appFilter = document.getElementById('registryAppFilter').value;
+
+            const list = getUnifiedRegistry();
+            let filtered = list.filter(item => {
+                if (appFilter !== 'all' && item.app !== appFilter) return false;
+                if (!search) return true;
+                const text = `${item.doctorName} ${item.orderNumber} ${item.city} ${item.key} ${item.specialite} ${item.app}`.toLowerCase();
+                return text.includes(search);
+            });
+
+            document.getElementById('totalLicensesCount').innerText = list.length;
+            updateRegistryCountBadge();
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted)">Aucune licence enregistrée pour ces critères.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(item => {
+                const isExpired = new Date(item.expiryDate) < new Date();
+                const statusClass = item.status === 'revoked' ? 'revoked' : (isExpired ? 'revoked' : 'active');
+                const statusLabel = item.status === 'revoked' ? 'Révoqué' : (isExpired ? 'Expiré' : 'Actif');
+
+                return `
+                    <tr>
+                        <td>
+                            <strong style="color:var(--primary-light)">${escapeHtml(item.app)}</strong>
+                        </td>
+                        <td>
+                            <div class="doc-name-cell">${escapeHtml(item.doctorName)}</div>
+                            <div class="doc-sub-cell">${item.orderNumber ? 'N° ' + escapeHtml(item.orderNumber) + ' • ' : ''}${escapeHtml(item.city || item.specialite || '')}</div>
+                        </td>
+                        <td>
+                            <span class="key-mono" title="Cliquer pour copier" onclick="copyDirectKey('${escapeHtml(item.key)}')" style="cursor:pointer">
+                                ${escapeHtml(item.key)}
+                            </span>
+                        </td>
+                        <td>
+                            <div>${escapeHtml(item.expiryDate || 'Non définie')}</div>
+                            <div class="doc-sub-cell">${item.maxDevices ? item.maxDevices + ' poste(s)' : ''}</div>
+                        </td>
+                        <td>
+                            <span class="status-badge ${statusClass}">${statusLabel}</span>
+                        </td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="btn-table-action" onclick="copyDirectKey('${escapeHtml(item.key)}')" title="Copier la clé">📋</button>
+                                <button class="btn-table-action" onclick="toggleLicenseStatus('${item.id}')" title="Changer le statut (Actif / Révoqué)">
+                                    ${item.status === 'revoked' ? '🟢' : '⛔'}
+                                </button>
+                                <button class="btn-table-action" onclick="deleteLicenseRecord('${item.id}')" title="Supprimer" style="color:#f87171">🗑️</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function copyDirectKey(key) {
+            navigator.clipboard.writeText(key).then(() => {
+                showToast(`Clé copiée : ${key}`, '📋');
+            });
+        }
+
+        function toggleLicenseStatus(id) {
+            const list = getUnifiedRegistry();
+            const item = list.find(x => x.id === id);
+            if (!item) return;
+
+            item.status = item.status === 'revoked' ? 'active' : 'revoked';
+            saveRegistry(list);
+            renderRegistryTable();
+            pushLicenseToFirebase(item);
+            showToast(`Statut mis à jour : ${item.status === 'revoked' ? 'Révoquée' : 'Active'}`, 'ℹ️');
+        }
+
+        function deleteLicenseRecord(id) {
+            if (!confirm('Confirmez-vous la suppression de cette licence de l\'historique local ?')) return;
+            const list = getUnifiedRegistry().filter(x => x.id !== id);
+            saveRegistry(list);
+            renderRegistryTable();
+            showToast('Licence supprimée du registre', '🗑️');
+        }
+
+        function updateRegistryCountBadge() {
+            const count = getUnifiedRegistry().length;
+            const badge = document.getElementById('regCountBadge');
+            if (badge) badge.innerText = count;
+        }
+
+        // ==============================================================
+        // SYNCHRONISATION FIREBASE REALTIME DATABASE
+        // ==============================================================
+        function getFirebaseConfig() {
+            return {
+                url: localStorage.getItem(STORAGE_FB_URL_KEY) || '',
+                auth: localStorage.getItem(STORAGE_FB_AUTH_KEY) || ''
+            };
+        }
+
+        function updateFirebasePillStatus(status, text) {
+            const pill = document.getElementById('firebasePill');
+            const dot = document.getElementById('firebaseStatusDot');
+            const txt = document.getElementById('firebaseStatusText');
+            if (!pill) return;
+
+            pill.className = 'status-pill ' + status;
+            if (status === 'connected') {
+                dot.innerText = '🟢';
+                txt.innerText = 'Firebase En Ligne';
+            } else if (status === 'error') {
+                dot.innerText = '🔴';
+                txt.innerText = 'Erreur Firebase';
+            } else {
+                dot.innerText = '⚪';
+                txt.innerText = 'Stockage Local';
+            }
+        }
+
+        async function testFirebaseConnection() {
+            const urlInput = document.getElementById('fbUrlInput').value.trim();
+            const authInput = document.getElementById('fbAuthInput').value.trim();
+            const msg = document.getElementById('fbTestMsg');
+            msg.style.display = 'block';
+
+            if (!urlInput) {
+                msg.style.background = 'rgba(239, 68, 68, 0.2)';
+                msg.style.color = '#f87171';
+                msg.innerText = 'Veuillez saisir l\'URL Firebase Database.';
+                return;
+            }
+
+            let cleanUrl = urlInput.startsWith('http') ? urlInput : 'https://' + urlInput;
+            if (cleanUrl.endsWith('/')) cleanUrl = cleanUrl.slice(0, -1);
+
+            msg.style.background = 'rgba(2, 132, 199, 0.2)';
+            msg.style.color = '#38bdf8';
+            msg.innerText = 'Test de connexion en cours...';
+
+            try {
+                const authParam = authInput ? `?auth=${encodeURIComponent(authInput)}` : '';
+                const testEndpoint = `${cleanUrl}/docpocket_licenses_registry/ping.json${authParam}`;
+
+                const res = await fetch(testEndpoint, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ping: Date.now(), client: 'DocPocket Keygen Console' })
+                });
+
+                if (res.ok) {
+                    msg.style.background = 'rgba(34, 197, 94, 0.2)';
+                    msg.style.color = '#4ade80';
+                    msg.innerText = '✓ Connexion Firebase réussie ! Droits de lecture et écriture confirmés.';
+                } else {
+                    msg.style.background = 'rgba(239, 68, 68, 0.2)';
+                    msg.style.color = '#f87171';
+                    msg.innerText = `Erreur HTTP ${res.status} : ${res.statusText}. Vérifiez vos règles de sécurité Firebase.`;
+                }
+            } catch (e) {
+                msg.style.background = 'rgba(239, 68, 68, 0.2)';
+                msg.style.color = '#f87171';
+                msg.innerText = 'Échec de connexion : ' + e.message;
+            }
+        }
+
+        async function saveFirebaseSettings() {
+            const urlInput = document.getElementById('fbUrlInput').value.trim();
+            const authInput = document.getElementById('fbAuthInput').value.trim();
+
+            let cleanUrl = urlInput;
+            if (cleanUrl && !cleanUrl.startsWith('http')) cleanUrl = 'https://' + cleanUrl;
+            if (cleanUrl.endsWith('/')) cleanUrl = cleanUrl.slice(0, -1);
+
+            if (cleanUrl) localStorage.setItem(STORAGE_FB_URL_KEY, cleanUrl);
+            else localStorage.removeItem(STORAGE_FB_URL_KEY);
+
+            if (authInput) localStorage.setItem(STORAGE_FB_AUTH_KEY, authInput);
+            else localStorage.removeItem(STORAGE_FB_AUTH_KEY);
+
+            closeSettingsModal();
+            showToast('Paramètres Firebase enregistrés', '💾');
+            await syncFirebaseLicenses(true);
+        }
+
+        async function pushLicenseToFirebase(item) {
+            const cfg = getFirebaseConfig();
+            if (!cfg.url || !item.key) return;
+
+            try {
+                const authParam = cfg.auth ? `?auth=${encodeURIComponent(cfg.auth)}` : '';
+                const cleanKeyId = item.key.replace(/[^a-zA-Z0-9]/g, '_');
+                const targetUrl = `${cfg.url}/docpocket_licenses_registry/${cleanKeyId}.json${authParam}`;
+
+                await fetch(targetUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(item)
+                });
+            } catch (err) {
+                console.warn('Erreur push Firebase :', err);
+            }
+        }
+
+        async function syncFirebaseLicenses(showNotification = false) {
+            const cfg = getFirebaseConfig();
+            if (!cfg.url) {
+                updateFirebasePillStatus('local');
+                if (showNotification) showToast('Mode local actif. Configurez Firebase dans les Réglages.', 'ℹ️');
+                return;
+            }
+
+            try {
+                const authParam = cfg.auth ? `?auth=${encodeURIComponent(cfg.auth)}` : '';
+                const targetUrl = `${cfg.url}/docpocket_licenses_registry.json${authParam}`;
+
+                const res = await fetch(targetUrl, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!res.ok) {
+                    updateFirebasePillStatus('error');
+                    if (showNotification) showToast(`Erreur HTTP Firebase (${res.status})`, '❌');
+                    return;
+                }
+
+                const cloudData = await res.json() || {};
+                const localList = getUnifiedRegistry();
+                const map = new Map();
+
+                localList.forEach(item => {
+                    if (item.key) map.set(item.key.trim().toUpperCase(), item);
+                });
+
+                Object.keys(cloudData).forEach(cloudKey => {
+                    if (cloudKey === 'ping') return;
+                    const item = cloudData[cloudKey];
+                    if (!item || !item.key) return;
+
+                    const cleanKey = item.key.trim().toUpperCase();
+                    const existing = map.get(cleanKey);
+
+                    if (existing) {
+                        map.set(cleanKey, { ...existing, ...item });
+                    } else {
+                        map.set(cleanKey, {
+                            id: 'lic_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                            app: item.app || 'DocPocket Cabinet',
+                            doctorName: item.doctorName || item.name || 'Praticien',
+                            orderNumber: item.orderNumber || item.ordreId || '',
+                            specialite: item.specialite || 'Médecine Générale',
+                            city: item.city || item.ville || '',
+                            phone: item.phone || item.telephone || '',
+                            key: cleanKey,
+                            maxDevices: item.maxDevices || 3,
+                            expiryDate: item.expiryDate || calculateExpiryDateStr('365'),
+                            status: item.status || 'active',
+                            createdAt: item.createdAt || item.issuedAt || new Date().toISOString()
+                        });
+                    }
+                });
+
+                const merged = Array.from(map.values());
+                merged.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+                saveRegistry(merged);
+                renderRegistryTable();
+                updateFirebasePillStatus('connected');
+
+                if (showNotification) showToast(`Synchronisé avec Firebase (${merged.length} licences)`, '🟢');
+            } catch (err) {
+                updateFirebasePillStatus('error');
+                if (showNotification) showToast('Connexion Firebase impossible : ' + err.message, '❌');
+            }
+        }
+
+        // ==============================================================
+        // EXPORT / IMPORT (CSV, JSON)
+        // ==============================================================
+        function exportRegistryCSV() {
+            const list = getUnifiedRegistry();
+            if (list.length === 0) {
+                showToast('Le registre est vide.', 'ℹ️');
+                return;
+            }
+
+            const headers = ['Application', 'Nom Praticien', 'Num Ordre', 'Specialite', 'Ville', 'Telephone', 'Cle Licence', 'Postes', 'Expiration', 'Statut', 'Date Creation'];
+            const rows = list.map(item => [
+                `"${(item.app || '').replace(/"/g, '""')}"`,
+                `"${(item.doctorName || '').replace(/"/g, '""')}"`,
+                `"${(item.orderNumber || '').replace(/"/g, '""')}"`,
+                `"${(item.specialite || '').replace(/"/g, '""')}"`,
+                `"${(item.city || '').replace(/"/g, '""')}"`,
+                `"${(item.phone || '').replace(/"/g, '""')}"`,
+                `"${(item.key || '').replace(/"/g, '""')}"`,
+                `"${item.maxDevices || 1}"`,
+                `"${item.expiryDate || ''}"`,
+                `"${item.status || 'active'}"`,
+                `"${item.createdAt || ''}"`
+            ]);
+
+            const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `DocPocket_Licences_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Fichier CSV exporté !', '📥');
+        }
+
+        function exportRegistryJSON() {
+            const list = getUnifiedRegistry();
+            const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(list, null, 2));
+            const a = document.createElement('a');
+            a.href = dataStr;
+            a.download = `DocPocket_Licences_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            showToast('Backup JSON téléchargé !', '💾');
+        }
+
+        function triggerImportJSON() {
+            document.getElementById('jsonImportInput').click();
+        }
+
+        function handleImportJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (Array.isArray(parsed)) {
+                        const current = getUnifiedRegistry();
+                        const map = new Map();
+                        current.forEach(item => map.set(item.key, item));
+                        parsed.forEach(item => { if (item.key) map.set(item.key, item); });
+
+                        const merged = Array.from(map.values());
+                        saveRegistry(merged);
+                        renderRegistryTable();
+                        showToast(`${parsed.length} licence(s) importée(s) avec succès !`, '✅');
+                    } else {
+                        showToast('Format JSON invalide.', '❌');
+                    }
+                } catch (err) {
+                    showToast('Erreur lecture fichier : ' + err.message, '❌');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // ==============================================================
+        // PARAMÈTRES (MODIFIER PIN, RÉINITIALISATION)
+        // ==============================================================
+        function openSettingsModal() {
+            const cfg = getFirebaseConfig();
+            document.getElementById('fbUrlInput').value = cfg.url;
+            document.getElementById('fbAuthInput').value = cfg.auth;
+            document.getElementById('fbTestMsg').style.display = 'none';
+            document.getElementById('currentPinInput').value = '';
+            document.getElementById('newPinInput').value = '';
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function handleChangePin() {
+            const curr = document.getElementById('currentPinInput').value.trim();
+            const next = document.getElementById('newPinInput').value.trim();
+
+            if (curr !== getMasterPin()) {
+                showToast('Le code PIN actuel est erroné.', '⚠️');
+                return;
+            }
+
+            if (!next || next.length < 4) {
+                showToast('Le nouveau code PIN doit comporter au moins 4 chiffres.', '⚠️');
+                return;
+            }
+
+            localStorage.setItem(STORAGE_PIN_KEY, next);
+            showToast('Code PIN modifié avec succès !', '🔒');
+            closeSettingsModal();
+        }
+
+        function clearLocalRegistry() {
+            if (!confirm('Attention : Êtes-vous sûr de vouloir vider le registre local ? Cette action ne peut pas être annulée.')) return;
+            localStorage.removeItem(STORAGE_REGISTRY_KEY);
+            renderRegistryTable();
+            closeSettingsModal();
+            showToast('Registre local réinitialisé.', '🗑️');
+        }
+
+        // ==============================================================
+        // UTILITAIRES & NOTIFICATIONS TOAST
+        // ==============================================================
+        let toastTimeout = null;
+        function showToast(message, icon = '✓') {
+            const box = document.getElementById('toastBox');
+            const iconEl = document.getElementById('toastIcon');
+            const txtEl = document.getElementById('toastText');
+
+            if (!box) return;
+            iconEl.innerText = icon;
+            txtEl.innerText = message;
+            box.style.display = 'flex';
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                box.style.display = 'none';
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // ==============================================================
+        // INITIALISATION AU DÉMARRAGE
+        // ==============================================================
+        function initApp() {
+            renderRegistryTable();
+            updateRegistryCountBadge();
+            syncFirebaseLicenses(false);
+        }
+
+        // Enregistrement du Service Worker PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then((reg) => {
+                    console.log('[PWA] Service Worker actif, scope:', reg.scope);
+                }).catch((err) => {
+                    console.warn('[PWA] Enregistrement SW échoué:', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
