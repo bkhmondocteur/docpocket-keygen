@@ -1459,7 +1459,7 @@
                         <div class="search-wrapper">
                             <input type="text" id="registrySearch" class="form-control" placeholder="🔍 Rechercher praticien, n° ordre, ville, clé..." oninput="renderRegistryTable()">
                         </div>
-                        <div style="display:flex; gap:8px">
+                        <div style="display:flex; gap:8px; flex-wrap:wrap">
                             <select id="registryAppFilter" class="filter-select" onchange="renderRegistryTable()">
                                 <option value="all">Toutes les applications</option>
                                 <option value="DocPocket Cabinet">DocPocket Cabinet</option>
@@ -1471,7 +1471,13 @@
                                 <option value="FinPocket">FinPocket</option>
                                 <option value="GlycoPocket">GlycoPocket</option>
                             </select>
-                            <button class="btn-table-action" onclick="syncFirebaseLicenses(true)" title="Actualiser depuis Firebase">🔄 Sync</button>
+                            <select id="registryStatusFilter" class="filter-select" onchange="renderRegistryTable()">
+                                <option value="all">Tous les statuts</option>
+                                <option value="active">🟢 Actives uniquement</option>
+                                <option value="revoked">⛔ Révoquées uniquement</option>
+                                <option value="expired">⏳ Expirées uniquement</option>
+                            </select>
+                            <button class="btn-table-action" onclick="syncFirebaseLicenses(true)" title="Actualiser et synchroniser en direct depuis Firebase">🔄 Sync Firebase</button>
                         </div>
                     </div>
 
@@ -1483,7 +1489,7 @@
                                     <th>Bénéficiaire / Praticien</th>
                                     <th>Clé de Licence</th>
                                     <th>Validité / Postes</th>
-                                    <th>Statut</th>
+                                    <th>Statut & Firebase</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -1564,6 +1570,93 @@
         </div>
     </div>
 
+    <!-- 4. MODALE DE MODIFICATION DE LICENCE & SYNCHRO FIREBASE -->
+    <div class="modal-overlay" id="editLicenseModal">
+        <div class="modal-card" style="max-width: 640px;">
+            <div class="modal-header">
+                <h3>✏️ Modifier la Licence & Synchroniser sur Firebase</h3>
+                <button class="btn-close-modal" onclick="closeEditLicenseModal()">✕</button>
+            </div>
+
+            <input type="hidden" id="edit_id">
+
+            <div style="background:#060b17; border:1px solid rgba(250, 204, 21, 0.35); border-radius:var(--radius-sm); padding:12px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <span id="edit_app_badge" class="app-tag" style="margin-right:8px">DocPocket</span>
+                    <span id="edit_key_display" class="key-mono" style="font-size:1.05rem; font-weight:800; color:var(--gold);"></span>
+                </div>
+                <button class="btn-table-action" onclick="copyDirectKey(document.getElementById('edit_key_display').innerText)" title="Copier la clé">📋 Copier</button>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>Nom du Médecin / Bénéficiaire *</label>
+                    <input type="text" id="edit_doctorName" class="form-control" placeholder="Nom complet">
+                </div>
+                <div class="form-group">
+                    <label>Numéro d'Ordre / Matricule</label>
+                    <input type="text" id="edit_orderNumber" class="form-control" placeholder="N° Ordre ou Matricule">
+                </div>
+            </div>
+
+            <div class="form-grid-3">
+                <div class="form-group">
+                    <label>Spécialité Médicale</label>
+                    <input type="text" id="edit_specialite" class="form-control" placeholder="Spécialité">
+                </div>
+                <div class="form-group">
+                    <label>Ville / Gouvernorat</label>
+                    <input type="text" id="edit_city" class="form-control" placeholder="Ville">
+                </div>
+                <div class="form-group">
+                    <label>Téléphone</label>
+                    <input type="text" id="edit_phone" class="form-control" placeholder="Numéro de contact">
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>Postes Autorisés (Appareils)</label>
+                    <input type="number" id="edit_maxDevices" class="form-control" min="1" max="50" value="3">
+                </div>
+                <div class="form-group">
+                    <label>Statut de la Licence</label>
+                    <select id="edit_status" class="form-control">
+                        <option value="active">🟢 Active (Autorisée)</option>
+                        <option value="revoked">⛔ Révoquée (Bloquée à distance)</option>
+                        <option value="suspended">🟠 Suspendue (En attente)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Date d'Expiration (YYYY-MM-DD)</label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="date" id="edit_expiryDate" class="form-control" style="flex:1;">
+                    <button type="button" class="pill-choice" onclick="extendEditExpiry(365)">+1 An</button>
+                    <button type="button" class="pill-choice" onclick="extendEditExpiry(730)">+2 Ans</button>
+                    <button type="button" class="pill-choice" onclick="setEditExpiryLifetime()">À Vie</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Notes & Remarques Administrateur</label>
+                <textarea id="edit_notes" class="form-control" rows="2" placeholder="Historique client, observations, modalité de paiement..."></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:10px;">
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="act-btn" style="background:#ef4444; color:#fff;" onclick="deleteCurrentEditingLicense()">🗑️ Supprimer de Firebase</button>
+                    <button type="button" class="act-btn" id="editRevokeBtn" style="background:rgba(239,68,68,0.2); color:#fca5a5; border:1px solid #ef4444;" onclick="toggleCurrentEditingRevoke()">⛔ Révoquer</button>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="act-btn" style="background:rgba(255,255,255,0.1); color:#fff;" onclick="closeEditLicenseModal()">Annuler</button>
+                    <button type="button" class="act-btn" style="background:var(--gold); color:#070d1e; font-weight:800;" onclick="saveEditedLicense()">💾 Enregistrer sur Firebase</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST POPUP -->
     <div id="toastBox">
         <span id="toastIcon">✓</span>
@@ -1583,7 +1676,7 @@
         // Sels cryptographiques officiels de chaque application
         const SALT_CABINET = 'DOCPOCKET_CABINET_PRO_SECURITY_SALT_2026';
         const SALT_MEDOC = 'DOCPOCKET_MEDOCS_TUNISIE_2026_SECURE_SALT';
-        const SALT_SMS = 'MEDWIN_SEC_2026';
+        const SALT_SMS = 'DOCPOCKET_SMS_SEC_2026';
         const SALT_MAIL = 'MAILPOCKET_PRO_MED_SECURE_SALT_2026';
         const SALT_COMPTA = 'COMPTA_SEC_2026';
         const SALT_FINPOCKET = 'FINPOCKET_PRO_SECURE_SALT_2026';
@@ -2248,7 +2341,7 @@
             updateRegistryCountBadge();
         }
 
-        function saveLicenseRecord(record) {
+        async function saveLicenseRecord(record) {
             const registry = getUnifiedRegistry();
             const existingIdx = registry.findIndex(r => r.key === record.key);
 
@@ -2260,12 +2353,16 @@
                 specialite: record.specialite || '',
                 city: record.city || '',
                 phone: record.phone || '',
+                email: record.email || '',
                 key: record.key,
                 maxDevices: record.maxDevices || 1,
                 duration: record.duration || '365',
                 expiryDate: record.expiryDate || calculateExpiryDateStr('365'),
                 status: record.status || 'active',
-                createdAt: record.createdAt || new Date().toISOString()
+                createdAt: record.createdAt || new Date().toISOString(),
+                lastUpdated: new Date().toISOString(),
+                notes: record.notes || '',
+                syncedWithFirebase: false
             };
 
             if (existingIdx >= 0) {
@@ -2277,8 +2374,15 @@
             saveRegistry(registry);
             renderRegistryTable();
 
-            // Pousser vers Firebase si configuré
-            pushLicenseToFirebase(docData);
+            // Pousser vers Firebase en temps réel
+            const fbSuccess = await pushLicenseToFirebase(docData);
+            if (fbSuccess) {
+                docData.syncedWithFirebase = true;
+                const idx = registry.findIndex(r => r.key === record.key);
+                if (idx >= 0) registry[idx].syncedWithFirebase = true;
+                saveRegistry(registry);
+                renderRegistryTable();
+            }
         }
 
         function renderRegistryTable() {
@@ -2287,12 +2391,19 @@
 
             const search = (document.getElementById('registrySearch').value || '').toLowerCase().trim();
             const appFilter = document.getElementById('registryAppFilter').value;
+            const statusFilter = document.getElementById('registryStatusFilter') ? document.getElementById('registryStatusFilter').value : 'all';
 
             const list = getUnifiedRegistry();
             let filtered = list.filter(item => {
                 if (appFilter !== 'all' && item.app !== appFilter) return false;
+
+                const isExpired = item.expiryDate && !item.expiryDate.startsWith('2099') && new Date(item.expiryDate) < new Date();
+                if (statusFilter === 'active' && (item.status === 'revoked' || isExpired)) return false;
+                if (statusFilter === 'revoked' && item.status !== 'revoked') return false;
+                if (statusFilter === 'expired' && !isExpired) return false;
+
                 if (!search) return true;
-                const text = `${item.doctorName} ${item.orderNumber} ${item.city} ${item.key} ${item.specialite} ${item.app}`.toLowerCase();
+                const text = `${item.doctorName} ${item.orderNumber} ${item.city} ${item.key} ${item.specialite} ${item.app} ${item.phone} ${item.email}`.toLowerCase();
                 return text.includes(search);
             });
 
@@ -2300,14 +2411,25 @@
             updateRegistryCountBadge();
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--text-muted)">Aucune licence enregistrée pour ces critères.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:32px; color:var(--text-muted)">Aucune licence trouvée dans le registre pour ces critères.</td></tr>`;
                 return;
             }
 
             tbody.innerHTML = filtered.map(item => {
-                const isExpired = new Date(item.expiryDate) < new Date();
-                const statusClass = item.status === 'revoked' ? 'revoked' : (isExpired ? 'revoked' : 'active');
-                const statusLabel = item.status === 'revoked' ? 'Révoqué' : (isExpired ? 'Expiré' : 'Actif');
+                const isExpired = item.expiryDate && !item.expiryDate.startsWith('2099') && new Date(item.expiryDate) < new Date();
+                const statusClass = item.status === 'revoked' ? 'revoked' : (isExpired ? 'revoked' : (item.status === 'suspended' ? 'warning' : 'active'));
+                const statusLabel = item.status === 'revoked' ? '⛔ Révoquée' : (isExpired ? '⏳ Expirée' : (item.status === 'suspended' ? '🟠 Suspendue' : '🟢 Active'));
+                const cloudBadge = item.syncedWithFirebase ? '<span style="font-size:0.7rem; color:#4ade80; background:rgba(34,197,94,0.12); padding:2px 6px; border-radius:4px; border:1px solid rgba(34,197,94,0.3); margin-left:4px;">☁️ Firebase</span>' : '<span style="font-size:0.7rem; color:#94a3b8; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; margin-left:4px;">💾 Local</span>';
+
+                let remainingText = '';
+                if (item.expiryDate) {
+                    if (item.expiryDate.startsWith('2099')) remainingText = 'Illimité (À vie)';
+                    else {
+                        const diff = new Date(item.expiryDate) - new Date();
+                        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                        remainingText = days > 0 ? `${days} j restants` : 'Expirée';
+                    }
+                }
 
                 return `
                     <tr>
@@ -2316,7 +2438,11 @@
                         </td>
                         <td>
                             <div class="doc-name-cell">${escapeHtml(item.doctorName)}</div>
-                            <div class="doc-sub-cell">${item.orderNumber ? 'N° ' + escapeHtml(item.orderNumber) + ' • ' : ''}${escapeHtml(item.city || item.specialite || '')}</div>
+                            <div class="doc-sub-cell">
+                                ${item.orderNumber ? 'N° ' + escapeHtml(item.orderNumber) + ' • ' : ''}
+                                ${escapeHtml(item.specialite || item.city || '')}
+                                ${item.phone ? ' • 📞 ' + escapeHtml(item.phone) : ''}
+                            </div>
                         </td>
                         <td>
                             <span class="key-mono" title="Cliquer pour copier" onclick="copyDirectKey('${escapeHtml(item.key)}')" style="cursor:pointer">
@@ -2325,18 +2451,23 @@
                         </td>
                         <td>
                             <div>${escapeHtml(item.expiryDate || 'Non définie')}</div>
-                            <div class="doc-sub-cell">${item.maxDevices ? item.maxDevices + ' poste(s)' : ''}</div>
+                            <div class="doc-sub-cell">${escapeHtml(remainingText)} • ${item.maxDevices || 1} poste(s)</div>
                         </td>
                         <td>
-                            <span class="status-badge ${statusClass}">${statusLabel}</span>
+                            <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+                                <span class="status-badge ${statusClass}">${statusLabel}</span>
+                                ${cloudBadge}
+                            </div>
                         </td>
                         <td>
                             <div class="table-actions">
-                                <button class="btn-table-action" onclick="copyDirectKey('${escapeHtml(item.key)}')" title="Copier la clé">📋</button>
-                                <button class="btn-table-action" onclick="toggleLicenseStatus('${item.id}')" title="Changer le statut (Actif / Révoqué)">
+                                <button class="btn-table-action" onclick="openEditLicenseModal('${item.id}')" title="Modifier la licence & enregistrer sur Firebase" style="color:#facc15; border-color:rgba(250,204,21,0.3)">✏️</button>
+                                <button class="btn-table-action" onclick="toggleLicenseStatus('${item.id}')" title="Changer le statut (Actif / Révoqué sur Firebase)">
                                     ${item.status === 'revoked' ? '🟢' : '⛔'}
                                 </button>
-                                <button class="btn-table-action" onclick="deleteLicenseRecord('${item.id}')" title="Supprimer" style="color:#f87171">🗑️</button>
+                                <button class="btn-table-action" onclick="copyDirectKey('${escapeHtml(item.key)}')" title="Copier la clé">📋</button>
+                                <button class="btn-table-action" onclick="shareWhatsAppDirect('${item.id}')" title="Partager sur WhatsApp" style="color:#4ade80">💬</button>
+                                <button class="btn-table-action" onclick="deleteLicenseRecord('${item.id}')" title="Supprimer définitivement de Firebase et du local" style="color:#f87171">🗑️</button>
                             </div>
                         </td>
                     </tr>
@@ -2350,24 +2481,186 @@
             });
         }
 
-        function toggleLicenseStatus(id) {
+        async function toggleLicenseStatus(id) {
             const list = getUnifiedRegistry();
             const item = list.find(x => x.id === id);
             if (!item) return;
 
-            item.status = item.status === 'revoked' ? 'active' : 'revoked';
+            const nextStatus = item.status === 'revoked' ? 'active' : 'revoked';
+            item.status = nextStatus;
+            item.lastUpdated = new Date().toISOString();
+            if (nextStatus === 'revoked') {
+                item.revokedAt = new Date().toISOString();
+            } else {
+                item.revokedAt = null;
+            }
+
             saveRegistry(list);
             renderRegistryTable();
-            pushLicenseToFirebase(item);
-            showToast(`Statut mis à jour : ${item.status === 'revoked' ? 'Révoquée' : 'Active'}`, 'ℹ️');
+
+            showToast(nextStatus === 'revoked' ? 'Révocation en cours sur Firebase...' : 'Réactivation en cours...', '⏳');
+
+            const fbOk = await patchLicenseOnFirebase(item.key, {
+                status: nextStatus,
+                revokedAt: item.revokedAt,
+                lastUpdated: item.lastUpdated
+            });
+
+            if (fbOk) {
+                item.syncedWithFirebase = true;
+                saveRegistry(list);
+                renderRegistryTable();
+            }
+
+            if (nextStatus === 'revoked') {
+                showToast(fbOk ? 'Licence révoquée sur Firebase ⛔' : 'Licence révoquée en local ⛔', '⛔');
+            } else {
+                showToast(fbOk ? 'Licence réactivée sur Firebase 🟢' : 'Licence réactivée en local 🟢', '🟢');
+            }
         }
 
-        function deleteLicenseRecord(id) {
-            if (!confirm('Confirmez-vous la suppression de cette licence de l\'historique local ?')) return;
-            const list = getUnifiedRegistry().filter(x => x.id !== id);
+        async function deleteLicenseRecord(id) {
+            const list = getUnifiedRegistry();
+            const item = list.find(x => x.id === id);
+            if (!item) return;
+
+            if (!confirm(`Supprimer définitivement la licence pour "${item.doctorName}" (${item.app}) ?\n\nCette action supprimera également la licence sur Firebase.`)) return;
+
+            showToast('Suppression en cours sur Firebase...', '⏳');
+            const fbDeleted = await deleteLicenseFromFirebase(item.key);
+
+            const updated = list.filter(x => x.id !== id);
+            saveRegistry(updated);
+            renderRegistryTable();
+
+            if (fbDeleted) {
+                showToast('Licence supprimée de Firebase et du registre local 🗑️', '✓');
+            } else {
+                showToast('Licence supprimée du registre local 🗑️', '✓');
+            }
+        }
+
+        // ==============================================================
+        // MODIFICATION D'UNE LICENCE (MODAL & SYNCHRO FIREBASE)
+        // ==============================================================
+        function openEditLicenseModal(id) {
+            const list = getUnifiedRegistry();
+            const item = list.find(x => x.id === id);
+            if (!item) return;
+
+            document.getElementById('edit_id').value = item.id;
+            document.getElementById('edit_key_display').innerText = item.key;
+            document.getElementById('edit_app_badge').innerText = item.app;
+            document.getElementById('edit_doctorName').value = item.doctorName || '';
+            document.getElementById('edit_orderNumber').value = item.orderNumber || '';
+            document.getElementById('edit_specialite').value = item.specialite || '';
+            document.getElementById('edit_city').value = item.city || '';
+            document.getElementById('edit_phone').value = item.phone || '';
+            document.getElementById('edit_maxDevices').value = item.maxDevices || 1;
+            document.getElementById('edit_expiryDate').value = (item.expiryDate || '').slice(0, 10);
+            document.getElementById('edit_status').value = item.status || 'active';
+            document.getElementById('edit_notes').value = item.notes || '';
+
+            const revokeBtn = document.getElementById('editRevokeBtn');
+            if (item.status === 'revoked') {
+                revokeBtn.innerText = '🟢 Réactiver la Licence';
+                revokeBtn.style.color = '#4ade80';
+                revokeBtn.style.borderColor = '#22c55e';
+            } else {
+                revokeBtn.innerText = '⛔ Révoquer la Licence';
+                revokeBtn.style.color = '#fca5a5';
+                revokeBtn.style.borderColor = '#ef4444';
+            }
+
+            document.getElementById('editLicenseModal').style.display = 'flex';
+        }
+
+        function closeEditLicenseModal() {
+            document.getElementById('editLicenseModal').style.display = 'none';
+        }
+
+        function extendEditExpiry(days) {
+            const currentVal = document.getElementById('edit_expiryDate').value;
+            let baseDate = currentVal && !currentVal.startsWith('2099') ? new Date(currentVal) : new Date();
+            if (isNaN(baseDate.getTime())) baseDate = new Date();
+            baseDate.setDate(baseDate.getDate() + days);
+            document.getElementById('edit_expiryDate').value = baseDate.toISOString().slice(0, 10);
+            showToast(`Échéance prolongée de ${days} jours`, '⏳');
+        }
+
+        function setEditExpiryLifetime() {
+            document.getElementById('edit_expiryDate').value = '2099-12-31';
+            showToast('Validité définie à vie (Illimitée)', '♾️');
+        }
+
+        async function saveEditedLicense() {
+            const id = document.getElementById('edit_id').value;
+            const list = getUnifiedRegistry();
+            const item = list.find(x => x.id === id);
+            if (!item) return;
+
+            const doctorName = document.getElementById('edit_doctorName').value.trim();
+            if (!doctorName) {
+                showToast('Le nom du praticien ou client est obligatoire.', '⚠️');
+                return;
+            }
+
+            item.doctorName = doctorName;
+            item.orderNumber = document.getElementById('edit_orderNumber').value.trim();
+            item.specialite = document.getElementById('edit_specialite').value.trim();
+            item.city = document.getElementById('edit_city').value.trim();
+            item.phone = document.getElementById('edit_phone').value.trim();
+            item.maxDevices = parseInt(document.getElementById('edit_maxDevices').value, 10) || 1;
+            item.expiryDate = document.getElementById('edit_expiryDate').value || calculateExpiryDateStr('365');
+            item.status = document.getElementById('edit_status').value;
+            item.notes = document.getElementById('edit_notes').value.trim();
+            item.lastUpdated = new Date().toISOString();
+
+            if (item.status === 'revoked' && !item.revokedAt) {
+                item.revokedAt = new Date().toISOString();
+            } else if (item.status !== 'revoked') {
+                item.revokedAt = null;
+            }
+
             saveRegistry(list);
             renderRegistryTable();
-            showToast('Licence supprimée du registre', '🗑️');
+
+            showToast('Enregistrement en cours sur Firebase...', '⏳');
+            const fbOk = await pushLicenseToFirebase(item);
+
+            closeEditLicenseModal();
+
+            if (fbOk) {
+                item.syncedWithFirebase = true;
+                saveRegistry(list);
+                renderRegistryTable();
+                showToast('Licence modifiée et synchronisée sur Firebase ! ✓', '🟢');
+            } else {
+                showToast('Licence mise à jour dans le registre local.', '💾');
+            }
+        }
+
+        async function toggleCurrentEditingRevoke() {
+            const id = document.getElementById('edit_id').value;
+            await toggleLicenseStatus(id);
+            openEditLicenseModal(id);
+        }
+
+        async function deleteCurrentEditingLicense() {
+            const id = document.getElementById('edit_id').value;
+            closeEditLicenseModal();
+            await deleteLicenseRecord(id);
+        }
+
+        function shareWhatsAppDirect(id) {
+            const list = getUnifiedRegistry();
+            const item = list.find(x => x.id === id);
+            if (!item) return;
+
+            const name = item.doctorName || 'Docteur';
+            const msg = `Bonjour ${name},\n\nVoici votre clé d'activation officielle pour *${item.app}* :\n🔑 *${item.key}*\n\nValable jusqu'au : ${item.expiryDate || 'Non spécifiée'} (${item.maxDevices || 1} poste(s)).\n\nPour l'activer, ouvrez l'application et collez cette clé dans l'écran d'enregistrement.\n\nCordialement,\nSupport DocPocket Suite`;
+            const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
         }
 
         function updateRegistryCountBadge() {
@@ -2377,7 +2670,7 @@
         }
 
         // ==============================================================
-        // SYNCHRONISATION FIREBASE REALTIME DATABASE
+        // SYNCHRONISATION FIREBASE REALTIME DATABASE (CRUD COMPLET)
         // ==============================================================
         function getFirebaseConfig() {
             return {
@@ -2432,13 +2725,13 @@
                 const res = await fetch(testEndpoint, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ping: Date.now(), client: 'DocPocket Keygen Console' })
+                    body: JSON.stringify({ ping: Date.now(), client: 'DocPocket Suite Console' })
                 });
 
                 if (res.ok) {
                     msg.style.background = 'rgba(34, 197, 94, 0.2)';
                     msg.style.color = '#4ade80';
-                    msg.innerText = '✓ Connexion Firebase réussie ! Droits de lecture et écriture confirmés.';
+                    msg.innerText = '✓ Connexion Firebase réussie ! Droits de lecture, écriture et modification confirmés.';
                 } else {
                     msg.style.background = 'rgba(239, 68, 68, 0.2)';
                     msg.style.color = '#f87171';
@@ -2472,20 +2765,87 @@
 
         async function pushLicenseToFirebase(item) {
             const cfg = getFirebaseConfig();
-            if (!cfg.url || !item.key) return;
+            if (!cfg.url || !item.key) return false;
 
             try {
                 const authParam = cfg.auth ? `?auth=${encodeURIComponent(cfg.auth)}` : '';
                 const cleanKeyId = item.key.replace(/[^a-zA-Z0-9]/g, '_');
                 const targetUrl = `${cfg.url}/docpocket_licenses_registry/${cleanKeyId}.json${authParam}`;
 
-                await fetch(targetUrl, {
+                const payload = {
+                    id: item.id,
+                    app: item.app,
+                    key: item.key,
+                    doctorName: item.doctorName || '',
+                    orderNumber: item.orderNumber || '',
+                    specialite: item.specialite || '',
+                    city: item.city || '',
+                    phone: item.phone || '',
+                    maxDevices: item.maxDevices || 1,
+                    duration: item.duration || '365',
+                    expiryDate: item.expiryDate,
+                    status: item.status || 'active',
+                    createdAt: item.createdAt || new Date().toISOString(),
+                    lastUpdated: item.lastUpdated || new Date().toISOString(),
+                    notes: item.notes || '',
+                    revokedAt: item.revokedAt || null
+                };
+
+                const res = await fetch(targetUrl, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(item)
+                    body: JSON.stringify(payload)
                 });
+
+                return res.ok;
             } catch (err) {
                 console.warn('Erreur push Firebase :', err);
+                return false;
+            }
+        }
+
+        async function patchLicenseOnFirebase(key, updates) {
+            const cfg = getFirebaseConfig();
+            if (!cfg.url || !key) return false;
+
+            try {
+                const authParam = cfg.auth ? `?auth=${encodeURIComponent(cfg.auth)}` : '';
+                const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
+                const targetUrl = `${cfg.url}/docpocket_licenses_registry/${cleanKeyId}.json${authParam}`;
+
+                const res = await fetch(targetUrl, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...updates,
+                        lastUpdated: new Date().toISOString()
+                    })
+                });
+
+                return res.ok;
+            } catch (err) {
+                console.warn('Erreur patch Firebase :', err);
+                return false;
+            }
+        }
+
+        async function deleteLicenseFromFirebase(key) {
+            const cfg = getFirebaseConfig();
+            if (!cfg.url || !key) return false;
+
+            try {
+                const authParam = cfg.auth ? `?auth=${encodeURIComponent(cfg.auth)}` : '';
+                const cleanKeyId = key.replace(/[^a-zA-Z0-9]/g, '_');
+                const targetUrl = `${cfg.url}/docpocket_licenses_registry/${cleanKeyId}.json${authParam}`;
+
+                const res = await fetch(targetUrl, {
+                    method: 'DELETE'
+                });
+
+                return res.ok;
+            } catch (err) {
+                console.warn('Erreur suppression Firebase :', err);
+                return false;
             }
         }
 
@@ -2493,7 +2853,7 @@
             const cfg = getFirebaseConfig();
             if (!cfg.url) {
                 updateFirebasePillStatus('local');
-                if (showNotification) showToast('Mode local actif. Configurez Firebase dans les Réglages.', 'ℹ️');
+                if (showNotification) showToast('Mode local actif. Configurez Firebase dans les Paramètres ⚙️.', 'ℹ️');
                 return;
             }
 
@@ -2529,10 +2889,23 @@
                     const existing = map.get(cleanKey);
 
                     if (existing) {
-                        map.set(cleanKey, { ...existing, ...item });
+                        map.set(cleanKey, {
+                            ...existing,
+                            ...item,
+                            doctorName: item.doctorName || item.name || existing.doctorName,
+                            orderNumber: item.orderNumber || item.ordreId || existing.orderNumber,
+                            specialite: item.specialite || existing.specialite,
+                            city: item.city || item.ville || existing.city,
+                            phone: item.phone || item.telephone || existing.phone,
+                            maxDevices: item.maxDevices || existing.maxDevices || 1,
+                            expiryDate: item.expiryDate || existing.expiryDate,
+                            status: item.status || existing.status || 'active',
+                            notes: item.notes || existing.notes || '',
+                            syncedWithFirebase: true
+                        });
                     } else {
                         map.set(cleanKey, {
-                            id: 'lic_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                            id: item.id || 'lic_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
                             app: item.app || 'DocPocket Cabinet',
                             doctorName: item.doctorName || item.name || 'Praticien',
                             orderNumber: item.orderNumber || item.ordreId || '',
@@ -2543,7 +2916,10 @@
                             maxDevices: item.maxDevices || 3,
                             expiryDate: item.expiryDate || calculateExpiryDateStr('365'),
                             status: item.status || 'active',
-                            createdAt: item.createdAt || item.issuedAt || new Date().toISOString()
+                            createdAt: item.createdAt || item.issuedAt || new Date().toISOString(),
+                            lastUpdated: item.lastUpdated || new Date().toISOString(),
+                            notes: item.notes || '',
+                            syncedWithFirebase: true
                         });
                     }
                 });
@@ -2555,7 +2931,7 @@
                 renderRegistryTable();
                 updateFirebasePillStatus('connected');
 
-                if (showNotification) showToast(`Synchronisé avec Firebase (${merged.length} licences)`, '🟢');
+                if (showNotification) showToast(`Synchronisé avec Firebase (${merged.length} licences au total)`, '🟢');
             } catch (err) {
                 updateFirebasePillStatus('error');
                 if (showNotification) showToast('Connexion Firebase impossible : ' + err.message, '❌');
